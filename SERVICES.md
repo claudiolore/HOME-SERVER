@@ -26,7 +26,7 @@ Database relazionale avanzato, ideale per applicazioni che richiedono integrità
 - **Immagine:** `mysql:8`
 - **Dati:** `./mysql/data`
 
-Database relazionale ampiamente diffuso, usato in questo stack come backend per Nextcloud. Compatibile con la maggior parte delle applicazioni web e CMS.
+Database relazionale ampiamente diffuso, usato in questo stack come backend per Nextcloud. Il database `nextcloud` viene creato automaticamente al primo avvio tramite la variabile `MYSQL_DATABASE`.
 
 **Domanda a cui risponde:** *"Ho bisogno di un database MySQL compatibile con Nextcloud e altre app web tradizionali."*
 
