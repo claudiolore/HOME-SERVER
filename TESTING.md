@@ -2,6 +2,39 @@
 
 Sostituisci `RASPBERRY_IP` con l'IP del tuo Raspberry Pi (es. `192.168.1.100`).
 
+---
+
+## Riepilogo Credenziali
+
+### Servizi con credenziali dal `.env`
+
+| Servizio | Username | Password |
+|----------|----------|----------|
+| **Nextcloud** | `NEXTCLOUD_ADMIN_USER` | `NEXTCLOUD_ADMIN_PASSWORD` |
+| **Grafana** | `GRAFANA_ADMIN_USER` | `GRAFANA_ADMIN_PASSWORD` |
+| **PostgreSQL** | `POSTGRES_USER` | `POSTGRES_PASSWORD` |
+| **MySQL (root)** | `root` | `MYSQL_ROOT_PASSWORD` |
+| **MySQL (app)** | `MYSQL_USER` | `MYSQL_PASSWORD` |
+| **Redis** | - | `REDIS_PASSWORD` |
+
+### Servizi con account da creare al primo accesso
+
+| Servizio | Note |
+|----------|------|
+| **Portainer** | Crea admin entro 5 minuti dal primo avvio |
+| **Uptime Kuma** | Crea account al primo accesso |
+| **Open WebUI** | Registra un account al primo accesso |
+
+### Servizi senza autenticazione
+
+| Servizio | Note |
+|----------|------|
+| **Homepage** | Dashboard pubblica |
+| **Prometheus** | Metriche accessibili direttamente |
+| **Dozzle** | Log viewer senza login |
+
+---
+
 ## Setup Completo (da zero)
 
 ```bash
@@ -48,41 +81,56 @@ docker ps -a --filter "status=restarting"
 
 ## 2. Test Servizi Web (da browser)
 
-| Servizio | URL | Cosa verificare |
-|----------|-----|-----------------|
-| **Portainer** | `http://RASPBERRY_IP:9000` | Crea admin account al primo accesso |
-| **Homepage** | `http://RASPBERRY_IP:3002` | Dashboard con tutti i servizi |
-| **Nextcloud** | `http://RASPBERRY_IP:8080` | Wizard setup iniziale |
-| **Grafana** | `http://RASPBERRY_IP:3000` | Login: admin/admin (cambierà) |
-| **Prometheus** | `http://RASPBERRY_IP:9090` | Vai su Status → Targets |
-| **Uptime Kuma** | `http://RASPBERRY_IP:3001` | Crea account e aggiungi monitor |
-| **Dozzle** | `http://RASPBERRY_IP:8888` | Vedi log live dei container |
-| **Open WebUI** | `http://RASPBERRY_IP:8081` | Interfaccia chat AI |
+| Servizio | URL | Autenticazione | Credenziali |
+|----------|-----|----------------|-------------|
+| **Portainer** | `http://RASPBERRY_IP:9000` | Crea account | Scegli username/password al primo accesso |
+| **Homepage** | `http://RASPBERRY_IP:3002` | Nessuna | Accesso diretto |
+| **Nextcloud** | `http://RASPBERRY_IP:8080` | Da .env | `NEXTCLOUD_ADMIN_USER` / `NEXTCLOUD_ADMIN_PASSWORD` |
+| **Grafana** | `http://RASPBERRY_IP:3000` | Da .env | `GRAFANA_ADMIN_USER` / `GRAFANA_ADMIN_PASSWORD` |
+| **Prometheus** | `http://RASPBERRY_IP:9090` | Nessuna | Accesso diretto |
+| **Uptime Kuma** | `http://RASPBERRY_IP:3001` | Crea account | Scegli username/password al primo accesso |
+| **Dozzle** | `http://RASPBERRY_IP:8888` | Nessuna | Accesso diretto |
+| **Open WebUI** | `http://RASPBERRY_IP:8081` | Crea account | Registra un account al primo accesso |
 
 ---
 
 ## 3. Test Database (da CLI sul Raspberry)
 
+### Riepilogo Credenziali Database (tutte dal `.env`)
+
+| Database | Variabile User | Variabile Password |
+|----------|----------------|-------------------|
+| PostgreSQL | `POSTGRES_USER` | `POSTGRES_PASSWORD` |
+| MySQL (root) | root | `MYSQL_ROOT_PASSWORD` |
+| MySQL (app) | `MYSQL_USER` | `MYSQL_PASSWORD` |
+| Redis | - | `REDIS_PASSWORD` |
+
 ### PostgreSQL
 
 ```bash
-# Usa l'utente definito in .env (POSTGRES_USER, default: devuser)
+# Sostituisci 'devuser' con il valore di POSTGRES_USER dal .env
 docker exec -it postgres psql -U devuser -c "SELECT version();"
 ```
 
 ### MySQL
 
 ```bash
+# Come root (usa MYSQL_ROOT_PASSWORD)
 docker exec -it mysql mysql -u root -p -e "SHOW DATABASES;"
-# Inserisci la password MYSQL_ROOT_PASSWORD dal .env
+
+# Come utente app (usa MYSQL_USER e MYSQL_PASSWORD)
+docker exec -it mysql mysql -u nextcloud_user -p -e "SHOW DATABASES;"
 ```
 
 ### Redis
 
 ```bash
-# Redis richiede autenticazione (password dal .env)
-docker exec -it redis redis-cli -a $(grep REDIS_PASSWORD ~/HOME-SERVER/.env | cut -d'=' -f2) PING
+# Sostituisci con il valore di REDIS_PASSWORD dal .env
+docker exec -it redis redis-cli -a "TUA_REDIS_PASSWORD" PING
 # Deve rispondere: PONG
+
+# Oppure leggi la password automaticamente:
+docker exec -it redis redis-cli -a $(grep REDIS_PASSWORD ~/HOME-SERVER/.env | cut -d'=' -f2) PING
 ```
 
 ---
@@ -139,7 +187,9 @@ curl -s http://RASPBERRY_IP:9090/api/v1/targets | grep -o '"health":"[^"]*"'
 
 ### Grafana
 
-1. Login su `http://RASPBERRY_IP:3000` (admin/admin)
+1. Login su `http://RASPBERRY_IP:3000`
+   - **Username:** valore di `GRAFANA_ADMIN_USER` dal `.env` (default: `admin`)
+   - **Password:** valore di `GRAFANA_ADMIN_PASSWORD` dal `.env`
 2. Vai su **Connections → Data Sources → Add data source**
 3. Seleziona **Prometheus**
 4. URL: `http://prometheus:9090`
@@ -151,16 +201,16 @@ curl -s http://RASPBERRY_IP:9090/api/v1/targets | grep -o '"health":"[^"]*"'
 
 Al primo accesso su `http://RASPBERRY_IP:8080`:
 
-1. **Crea account admin** (scegli username/password)
-2. **Configura database MySQL:**
-   - Utente: `nextcloud`
-   - Password: (dal .env `MYSQL_PASSWORD`)
-   - Database: `nextcloud`
-   - Host: `mysql:3306`
-3. **Configura Redis** (opzionale, nelle impostazioni avanzate):
+1. **Login admin** (credenziali dal `.env`):
+   - Username: valore di `NEXTCLOUD_ADMIN_USER` (default: `admin`)
+   - Password: valore di `NEXTCLOUD_ADMIN_PASSWORD`
+2. **Il database MySQL è già configurato automaticamente** grazie alle variabili `.env`:
+   - `MYSQL_USER` / `MYSQL_PASSWORD` → utente Nextcloud
+   - `MYSQL_DATABASE` → nome database (default: `nextcloud`)
+3. **Configura Redis** (opzionale, migliora le performance):
    - Host: `redis`
    - Porta: `6379`
-   - Password: (dal .env `REDIS_PASSWORD`)
+   - Password: valore di `REDIS_PASSWORD` dal `.env`
 
 ---
 
