@@ -233,9 +233,10 @@ Tutti i servizi comunicano attraverso una rete Docker interna (`internal`, drive
 
 ---
 
-## Variabili D'ambiente
+## Variabili D'ambiente e Configurazione
 
 - Le credenziali sono gestite tramite variabili d'ambiente nel file `.env`
+- Prometheus richiede un file di configurazione in `./prometheus/config/prometheus.yml`
 
 -------------
 
