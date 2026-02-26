@@ -50,7 +50,8 @@ docker exec -it mysql mysql -u root -p -e "SHOW DATABASES;"
 ### Redis
 
 ```bash
-docker exec -it redis redis-cli PING
+# Redis richiede autenticazione (password dal .env)
+docker exec -it redis redis-cli -a $(grep REDIS_PASSWORD ~/HOME-SERVER/.env | cut -d'=' -f2) PING
 # Deve rispondere: PONG
 ```
 
