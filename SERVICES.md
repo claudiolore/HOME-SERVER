@@ -250,4 +250,3 @@ Tutti i servizi comunicano attraverso una rete Docker interna (`internal`, drive
 
 - **Duplicati** o **Restic** — backup automatici
 - **Vaultwarden** — password manager (Bitwarden self-hosted)
-- **Authelia** o **Authentik** — SSO/2FA per proteggere i servizi
