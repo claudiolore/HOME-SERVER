@@ -89,9 +89,147 @@ Piattaforma self-hosted per la gestione di file, calendario, contatti, note e co
 
 ---
 
+## Gestione Container
+
+### Portainer
+
+- **Container:** `portainer`
+- **Porta:** `9000`
+- **Immagine:** `portainer/portainer-ce:latest`
+- **Dati:** `./portainer/data`
+
+UI web per controllare Docker: start/stop/restart container, vedere volumi, reti, immagini. Permette di creare e modificare container senza toccare la CLI, visualizzare log, eseguire comandi dentro un container e gestire stack compose.
+
+**Domanda a cui risponde:** *"Voglio gestire i container da browser, senza usare la CLI."*
+
+---
+
+## Monitoring
+
+### Uptime Kuma
+
+- **Container:** `uptime-kuma`
+- **Porta:** `3001`
+- **Immagine:** `louislam/uptime-kuma:latest`
+- **Dati:** `./uptime-kuma/data`
+
+Monitoraggio uptime dei servizi con controlli HTTP, ping e TCP. Invia notifiche se qualcosa va giù (Telegram, email, Discord). Dashboard con storico disponibilità e tempi di risposta.
+
+**Domanda a cui risponde:** *"È tutto online? Avvisami se qualcosa crasha."*
+
+---
+
+### Prometheus
+
+- **Container:** `prometheus`
+- **Porta:** `9090`
+- **Immagine:** `prom/prometheus:latest`
+- **Config:** `./prometheus/config`
+- **Dati:** `./prometheus/data`
+
+Sistema di raccolta e storage di metriche time-series. Scrape periodico degli endpoint dei servizi per raccogliere dati su CPU, RAM, disco, richieste HTTP e altre metriche. Backend dati per Grafana.
+
+**Domanda a cui risponde:** *"Voglio raccogliere e conservare metriche dei miei servizi nel tempo."*
+
+---
+
+### Grafana
+
+- **Container:** `grafana`
+- **Porta:** `3000`
+- **Immagine:** `grafana/grafana:latest`
+- **Dati:** `./grafana/data`
+- **Dipendenze:** Prometheus
+
+Piattaforma di visualizzazione dati con dashboard grafiche. Si collega a Prometheus per mostrare metriche in tempo reale e trend storici. Supporta alert e notifiche configurabili.
+
+**Domanda a cui risponde:** *"Quanta RAM usa Postgres? C'è un trend nel tempo?"*
+
+---
+
+### Dozzle
+
+- **Container:** `dozzle`
+- **Porta:** `8888`
+- **Immagine:** `amir20/dozzle:latest`
+
+Log viewer in tempo reale per tutti i container Docker. Interfaccia web leggera che mostra i log senza bisogno di accedere al terminale. Non persiste dati — mostra solo log live.
+
+**Domanda a cui risponde:** *"Cosa stanno loggando i container adesso?"*
+
+---
+
+## Media / Utilità
+
+### Homepage
+
+- **Container:** `homepage`
+- **Porta:** `3002`
+- **Immagine:** `ghcr.io/gethomepage/homepage:latest`
+- **Config:** `./homepage/config`
+
+Dashboard personale con link a tutti i servizi del server. Mostra widget con informazioni rapide (stato servizi, meteo, ecc.). Configurazione via file YAML, integrazione Docker per discovery automatico dei container.
+
+**Domanda a cui risponde:** *"Dove trovo tutti i miei servizi in un'unica pagina?"*
+
+---
+
+### Watchtower
+
+- **Container:** `watchtower`
+- **Immagine:** `containrrr/watchtower:latest`
+
+Controlla periodicamente se ci sono nuove versioni delle immagini Docker e le aggiorna automaticamente (pull + recreate). Configurato per pulire le vecchie immagini dopo l'aggiornamento. Intervallo di controllo configurabile via `WATCHTOWER_POLL_INTERVAL` (default: 86400s = 24h).
+
+**Domanda a cui risponde:** *"Aggiorna tutto senza che ci pensi io."*
+
+---
+
+## AI
+
+### Ollama
+
+- **Container:** `ollama`
+- **Porta:** `11434`
+- **Immagine:** `ollama/ollama:latest`
+- **Dati:** `./ollama/data`
+
+Runtime per eseguire Large Language Models (LLM) in locale. Permette di scaricare e usare modelli come Llama, Mistral, Gemma e altri direttamente sul server, senza inviare dati a servizi cloud. Espone un'API REST compatibile con il formato OpenAI.
+
+**Domanda a cui risponde:** *"Voglio eseguire modelli AI in locale, mantenendo i miei dati privati e senza costi per API."*
+
+---
+
+### Qdrant
+
+- **Container:** `qdrant`
+- **Porte:** `6333` (HTTP/REST), `6334` (gRPC)
+- **Immagine:** `qdrant/qdrant:latest`
+- **Dati:** `./qdrant/data`
+
+Database vettoriale ottimizzato per la ricerca per similarità. Usato in combinazione con Ollama per implementare pipeline RAG (Retrieval-Augmented Generation): si indicizzano documenti come embedding vettoriali e si recuperano i più rilevanti per arricchire il contesto dei prompt AI.
+
+**Domanda a cui risponde:** *"Voglio fare ricerca semantica sui miei documenti e dare memoria ai miei modelli AI."*
+
+---
+
+### Open WebUI
+
+- **Container:** `open-webui`
+- **Porta:** `8081`
+- **Immagine:** `ghcr.io/open-webui/open-webui:main`
+- **Dati:** `./open-webui/data`
+- **Dipendenze:** Ollama
+
+Interfaccia web per interagire con Ollama, simile a ChatGPT ma completamente locale. Supporta conversazioni multiple, gestione modelli, upload documenti e cronologia chat. Si connette automaticamente a Ollama sulla rete interna.
+
+**Domanda a cui risponde:** *"Voglio chattare con i miei modelli AI da browser, come su ChatGPT."*
+
+---
+
 ## Rete
 
-Tutti i servizi comunicano attraverso una rete Docker interna (`internal`, driver bridge). Le porte sono esposte direttamente sull'host — al momento non c'e un reverse proxy con HTTPS (vedi `future.md` per l'evoluzione con Traefik).
+Tutti i servizi comunicano attraverso una rete Docker interna (`internal`, driver bridge). Le porte sono esposte direttamente sull'host — al momento non c'è un reverse proxy con HTTPS (vedi Future Improvements per l'evoluzione con Traefik).
 
 ---
 
@@ -106,67 +244,10 @@ Tutti i servizi comunicano attraverso una rete Docker interna (`internal`, drive
 ## Infrastruttura / Networking
 
 - **Traefik** — reverse proxy con HTTPS automatico (ora tutto è su porte esposte, niente TLS)
-- **Portainer** — UI per gestire i container Docker
 - **Tailscale** — VPN per accesso remoto sicuro
-
-## Monitoring
-
-- **Uptime Kuma** — monitoraggio uptime dei servizi
-- **Grafana + Prometheus** — metriche e dashboard
-- **Dozzle** — log viewer per container in tempo reale
 
 ## Sicurezza / Backup
 
 - **Duplicati** o **Restic** — backup automatici
 - **Vaultwarden** — password manager (Bitwarden self-hosted)
 - **Authelia** o **Authentik** — SSO/2FA per proteggere i servizi
-
-## Media / Utilità
-
-- **Homepage** o **Homarr** — dashboard per tutti i servizi
-- **Watchtower** — aggiornamento automatico immagini Docker
-
-## AI (visto che hai Ollama + Qdrant)
-
-- **Open WebUI** — interfaccia web per Ollama (come ChatGPT ma locale)
-
----
-
-## Dettagli
-
-### Portainer — Gestione container
-
-- UI web per controllare Docker: start/stop/restart container, vedere volumi, reti, immagini
-- Crei e modifichi container senza toccare la CLI
-- Vedi log, exec dentro un container, gestisci stack compose
-- È tipo un "Docker Desktop" remoto per il tuo server
-
-### Monitoring (Uptime Kuma / Grafana+Prometheus / Dozzle) — Osservare lo stato
-
-- **Uptime Kuma**: controlla se i servizi rispondono (ping, HTTP check). Ti manda notifiche se qualcosa va giù (Telegram, email, Discord)
-- **Grafana + Prometheus**: raccoglie metriche (CPU, RAM, disco, richieste HTTP) e le mostra in dashboard grafiche nel tempo
-- **Dozzle**: mostra i log in tempo reale di tutti i container in un'unica UI
-
-### Dashboard (Homepage / Homarr) — Pagina di navigazione
-
-- Una pagina web con link a tutti i tuoi servizi (Nextcloud, Ollama, ecc.)
-- Mostra widget con info rapide (stato servizi, meteo, ecc.)
-- È tipo una "home page personale" per il tuo homelab
-
-### Watchtower — Aggiornamento automatico
-
-- Controlla periodicamente se ci sono nuove versioni delle immagini Docker
-- Le aggiorna automaticamente (pull + recreate)
-
----
-
-## In sintesi
-
-| Tool | Domanda a cui risponde |
-|------|------------------------|
-| Portainer | "Voglio gestire i container da browser" |
-| Uptime Kuma | "È tutto online? Avvisami se qualcosa crasha" |
-| Grafana+Prometheus | "Quanta RAM usa Postgres? C'è un trend?" |
-| Dozzle | "Cosa stanno loggando i container adesso?" |
-| Homepage/Homarr | "Dove trovo tutti i miei servizi?" |
-| Watchtower | "Aggiorna tutto senza che ci pensi io" |
