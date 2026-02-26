@@ -164,7 +164,9 @@ Al primo accesso su `http://RASPBERRY_IP:8080`:
 
 ---
 
-## 7. Test Watchtower (Aggiornamenti Automatici)
+## 7. Test Watchtower (Monitor-Only Mode)
+
+Watchtower è configurato in **modalità monitor-only**: controlla se ci sono aggiornamenti disponibili e invia notifiche, ma **non applica automaticamente gli aggiornamenti**. Questo ti permette di decidere quando aggiornare.
 
 ### Verifica stato container
 
@@ -173,7 +175,7 @@ Al primo accesso su `http://RASPBERRY_IP:8080`:
 docker ps --filter "name=watchtower" --format "table {{.Names}}\t{{.Status}}"
 
 # Verifica i log per vedere l'attività di Watchtower
-docker logs watchtower --tail 50
+docker logs watchtower --tail 20
 ```
 
 ### Verifica configurazione
@@ -182,58 +184,69 @@ docker logs watchtower --tail 50
 # Controlla le variabili d'ambiente attive
 docker inspect watchtower | jq '.[0].Config.Env'
 
-# Verifica il poll interval configurato (default: 86400 = 24 ore)
-docker inspect watchtower | jq '.[0].Config.Env[] | select(startswith("WATCHTOWER_POLL_INTERVAL"))'
+# Verifica che sia in monitor-only mode
+docker inspect watchtower | jq '.[0].Config.Env[] | select(startswith("WATCHTOWER_MONITOR"))'
+# Output atteso: "WATCHTOWER_MONITOR_ONLY=true"
 ```
 
-### Test aggiornamento manuale (run-once)
-
-Esegui Watchtower in modalità one-shot per forzare un controllo immediato degli aggiornamenti senza aspettare il poll interval:
+### Forzare un controllo immediato
 
 ```bash
-docker run --rm \
-  -v /var/run/docker.sock:/var/run/docker.sock \
-  containrrr/watchtower \
-  --run-once \
-  --cleanup
+# Controlla subito gli aggiornamenti disponibili (senza applicarli)
+docker exec watchtower /watchtower --run-once
 ```
 
-> **Attenzione:** questo comando controlla e aggiorna **tutti** i container in esecuzione. Per testare su un singolo container, aggiungi il nome del container alla fine:
+### Aggiornare manualmente i servizi
+
+Quando Watchtower ti notifica che ci sono aggiornamenti disponibili:
 
 ```bash
-docker run --rm \
-  -v /var/run/docker.sock:/var/run/docker.sock \
-  containrrr/watchtower \
-  --run-once \
-  --cleanup \
-  watchtower
+# Aggiorna un singolo servizio
+docker compose pull <nome-servizio>
+docker compose up -d <nome-servizio>
+
+# Esempio: aggiornare Grafana
+docker compose pull grafana
+docker compose up -d grafana
+
+# Aggiorna TUTTI i servizi
+docker compose pull
+docker compose up -d
+
+# Pulizia immagini vecchie dopo gli aggiornamenti
+docker image prune -f
 ```
 
-### Verifica che la pulizia immagini funzioni
+### Verifica notifiche email
 
 ```bash
-# Prima del test: elenca le immagini presenti
-docker images
-
-# Dopo un aggiornamento, le vecchie immagini devono essere rimosse automaticamente
-# (grazie a WATCHTOWER_CLEANUP=true)
-docker images --filter "dangling=true"
-# Il risultato deve essere vuoto dopo che Watchtower ha fatto pulizia
+# Controlla che le notifiche siano configurate
+docker logs watchtower | grep -i "shoutrrr\|notification"
+# Output atteso: "Using shoutrrr" invece di "Using no notifications"
 ```
 
 ### Monitoraggio tramite log
 
 ```bash
-# Segui i log in tempo reale per vedere quando Watchtower controlla aggiornamenti
+# Segui i log in tempo reale
 docker logs -f watchtower
 
-# Esempio output atteso quando non ci sono aggiornamenti:
+# Esempio output quando trova aggiornamenti disponibili (monitor-only):
+# time="..." level=info msg="Found new image" image="grafana/grafana:latest"
 # time="..." level=info msg="Session done" Failed=0 Scanned=N Updated=0 duration=...
+# (Updated=0 perché in monitor-only non applica gli aggiornamenti)
+```
 
-# Esempio output atteso quando trova un aggiornamento:
-# time="..." level=info msg="Found new containrrr/watchtower:latest image..."
-# time="..." level=info msg="Stopping /watchtower (containrrr/watchtower:latest)"
-# time="..." level=info msg="Creating /watchtower"
+### Troubleshooting notifiche
+
+Se le notifiche email non funzionano:
+
+```bash
+# Verifica le variabili SMTP nel .env
+grep WATCHTOWER_SMTP ~/HOME-SERVER/.env
+
+# Controlla i log per errori di notifica
+docker logs watchtower 2>&1 | grep -i "error\|notification\|smtp"
 ```
 
 ---

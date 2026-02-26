@@ -36,6 +36,9 @@
         href: http://100.114.47.75:8888
         description: Container Logs
         icon: dozzle
+    - Watchtower:
+        description: Image Updates (Monitor-Only)
+        icon: watchtower
 
 - Database:
     - PostgreSQL:
