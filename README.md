@@ -11,7 +11,13 @@ Documentazione dei servizi attualmente implementati nel `docker-compose.yml`.
 cp .env.example .env
 nano .env  # modifica le password
 
-# 2. Avvia tutto
+# 2. Installa tool utili per test e debug
+sudo apt install -y jq
+
+# 3. Inizializza cartelle e permessi
+sudo ./init.sh
+
+# 4. Avvia tutto
 docker compose up -d
 ```
 

@@ -2,6 +2,36 @@
 
 Sostituisci `RASPBERRY_IP` con l'IP del tuo Raspberry Pi (es. `192.168.1.100`).
 
+## Setup Completo (da zero)
+
+```bash
+# 1. Clona il repository
+git clone <repo>
+cd HOME-SERVER
+
+# 2. Configura le variabili d'ambiente
+cp .env.example .env
+nano .env  # modifica le password
+
+# 3. Installa tool utili
+sudo apt install -y jq
+
+# 4. Inizializza cartelle e permessi
+sudo ./init.sh
+
+# 5. Avvia tutti i servizi
+docker compose up -d
+```
+
+---
+
+## Prerequisiti
+
+```bash
+# Installa jq per parsare output JSON (usato nei test)
+sudo apt install -y jq
+```
+
 ---
 
 ## 1. Verifica Rapida Stato Container
@@ -99,8 +129,12 @@ Dopo aver scaricato un modello con Ollama:
 ### Prometheus
 
 ```bash
+# Richiede jq (vedi Prerequisiti)
 curl http://RASPBERRY_IP:9090/api/v1/targets | jq '.data.activeTargets[].health'
 # Tutti i target devono essere "up"
+
+# Alternativa senza jq:
+curl -s http://RASPBERRY_IP:9090/api/v1/targets | grep -o '"health":"[^"]*"'
 ```
 
 ### Grafana
@@ -149,7 +183,27 @@ docker logs open-webui 2>&1 | tail -20
 
 ## Troubleshooting
 
-Se un servizio non risponde:
+### Container in restart loop con "permission denied"
+
+Se vedi errori tipo `permission denied` o `not writable` nei log, riesegui lo script di init:
+
+```bash
+sudo ./init.sh
+docker compose restart NOME_CONTAINER
+```
+
+Oppure sistema manualmente i permessi per il servizio specifico:
+
+| Servizio | UID | Comando |
+|----------|-----|---------|
+| Prometheus | 65534 | `sudo chown -R 65534:65534 prometheus/data` |
+| Grafana | 472 | `sudo chown -R 472:472 grafana/data` |
+| Nextcloud | 33 | `sudo chown -R 33:33 nextcloud/data` |
+| Qdrant | 1000 | `sudo chown -R 1000:1000 qdrant/data` |
+| Uptime Kuma | 1000 | `sudo chown -R 1000:1000 uptime-kuma/data` |
+| Redis | 999 | `sudo chown -R 999:999 redis/data` |
+
+### Servizio non risponde
 
 ```bash
 # Controlla i log
