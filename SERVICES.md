@@ -4,6 +4,19 @@ Documentazione dei servizi attualmente implementati nel `docker-compose.yml`.
 
 ---
 
+## Quick Start
+
+```bash
+# 1. Crea .env
+cp .env.example .env
+nano .env  # modifica le password
+
+# 2. Avvia tutto
+docker compose up -d
+```
+
+---
+
 ## Database
 
 ### PostgreSQL 16
