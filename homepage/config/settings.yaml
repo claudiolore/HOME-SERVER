@@ -1,0 +1,32 @@
+# Homepage settings
+# https://gethomepage.dev/configs/settings/
+
+title: Home Server
+
+# Allow all hosts (needed for Tailscale and local network)
+allowedHosts:
+  - "100.114.47.75"
+  - "localhost"
+  - "127.0.0.1"
+  - "raspberrypi"
+  - "raspberrypi.local"
+
+background:
+  opacity: 50
+
+theme: dark
+color: slate
+
+layout:
+  AI:
+    style: row
+    columns: 3
+  Monitoring:
+    style: row
+    columns: 4
+  Database:
+    style: row
+    columns: 3
+  Cloud:
+    style: row
+    columns: 2

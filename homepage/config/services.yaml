@@ -1,0 +1,55 @@
+# Services configuration
+# https://gethomepage.dev/configs/services/
+
+- AI:
+    - Ollama:
+        href: http://100.114.47.75:11434
+        description: LLM Runtime
+        icon: ollama
+    - Open WebUI:
+        href: http://100.114.47.75:8081
+        description: Chat Interface
+        icon: open-webui
+    - Qdrant:
+        href: http://100.114.47.75:6333/dashboard
+        description: Vector Database
+        icon: qdrant
+
+- Monitoring:
+    - Portainer:
+        href: http://100.114.47.75:9000
+        description: Container Management
+        icon: portainer
+    - Grafana:
+        href: http://100.114.47.75:3000
+        description: Metrics Dashboard
+        icon: grafana
+    - Prometheus:
+        href: http://100.114.47.75:9090
+        description: Metrics Collection
+        icon: prometheus
+    - Uptime Kuma:
+        href: http://100.114.47.75:3001
+        description: Uptime Monitoring
+        icon: uptime-kuma
+    - Dozzle:
+        href: http://100.114.47.75:8888
+        description: Container Logs
+        icon: dozzle
+
+- Database:
+    - PostgreSQL:
+        description: Port 5432
+        icon: postgres
+    - MySQL:
+        description: Port 3306
+        icon: mysql
+    - Redis:
+        description: Port 6379
+        icon: redis
+
+- Cloud:
+    - Nextcloud:
+        href: http://100.114.47.75:8080
+        description: Personal Cloud
+        icon: nextcloud

@@ -1,0 +1,10 @@
+# Bookmarks configuration
+# https://gethomepage.dev/configs/bookmarks/
+
+- Developer:
+    - GitHub:
+        - abbr: GH
+          href: https://github.com
+    - Docker Hub:
+        - abbr: DH
+          href: https://hub.docker.com
