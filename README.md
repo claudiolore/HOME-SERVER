@@ -1,4 +1,4 @@
-# Servizi Attivi — Home Server
+# Home Server
 
 Documentazione dei servizi attualmente implementati nel `docker-compose.yml`.
 
