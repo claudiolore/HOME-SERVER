@@ -36,7 +36,8 @@ docker ps -a --filter "status=restarting"
 ### PostgreSQL
 
 ```bash
-docker exec -it postgres psql -U postgres -c "SELECT version();"
+# Usa l'utente definito in .env (POSTGRES_USER, default: devuser)
+docker exec -it postgres psql -U devuser -c "SELECT version();"
 ```
 
 ### MySQL
