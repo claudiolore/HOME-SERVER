@@ -5,11 +5,7 @@ title: Home Server
 
 # Allow all hosts (needed for Tailscale and local network)
 allowedHosts:
-  - "100.114.47.75"
-  - "localhost"
-  - "127.0.0.1"
-  - "raspberrypi"
-  - "raspberrypi.local"
+  - "*"
 
 background:
   opacity: 50
