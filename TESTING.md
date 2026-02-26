@@ -164,7 +164,81 @@ Al primo accesso su `http://RASPBERRY_IP:8080`:
 
 ---
 
-## 7. Checklist Finale
+## 7. Test Watchtower (Aggiornamenti Automatici)
+
+### Verifica stato container
+
+```bash
+# Controlla che Watchtower sia in esecuzione
+docker ps --filter "name=watchtower" --format "table {{.Names}}\t{{.Status}}"
+
+# Verifica i log per vedere l'attività di Watchtower
+docker logs watchtower --tail 50
+```
+
+### Verifica configurazione
+
+```bash
+# Controlla le variabili d'ambiente attive
+docker inspect watchtower | jq '.[0].Config.Env'
+
+# Verifica il poll interval configurato (default: 86400 = 24 ore)
+docker inspect watchtower | jq '.[0].Config.Env[] | select(startswith("WATCHTOWER_POLL_INTERVAL"))'
+```
+
+### Test aggiornamento manuale (run-once)
+
+Esegui Watchtower in modalità one-shot per forzare un controllo immediato degli aggiornamenti senza aspettare il poll interval:
+
+```bash
+docker run --rm \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  containrrr/watchtower \
+  --run-once \
+  --cleanup
+```
+
+> **Attenzione:** questo comando controlla e aggiorna **tutti** i container in esecuzione. Per testare su un singolo container, aggiungi il nome del container alla fine:
+
+```bash
+docker run --rm \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  containrrr/watchtower \
+  --run-once \
+  --cleanup \
+  watchtower
+```
+
+### Verifica che la pulizia immagini funzioni
+
+```bash
+# Prima del test: elenca le immagini presenti
+docker images
+
+# Dopo un aggiornamento, le vecchie immagini devono essere rimosse automaticamente
+# (grazie a WATCHTOWER_CLEANUP=true)
+docker images --filter "dangling=true"
+# Il risultato deve essere vuoto dopo che Watchtower ha fatto pulizia
+```
+
+### Monitoraggio tramite log
+
+```bash
+# Segui i log in tempo reale per vedere quando Watchtower controlla aggiornamenti
+docker logs -f watchtower
+
+# Esempio output atteso quando non ci sono aggiornamenti:
+# time="..." level=info msg="Session done" Failed=0 Scanned=N Updated=0 duration=...
+
+# Esempio output atteso quando trova un aggiornamento:
+# time="..." level=info msg="Found new containrrr/watchtower:latest image..."
+# time="..." level=info msg="Stopping /watchtower (containrrr/watchtower:latest)"
+# time="..." level=info msg="Creating /watchtower"
+```
+
+---
+
+## 8. Checklist Finale
 
 ```bash
 # Verifica memoria e CPU
