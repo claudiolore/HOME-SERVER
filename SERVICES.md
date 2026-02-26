@@ -4,19 +4,6 @@ Documentazione dei servizi attualmente implementati nel `docker-compose.yml`.
 
 ---
 
-## Panoramica
-
-| Servizio | Porta | Domanda a cui risponde |
-|----------|-------|------------------------|
-| PostgreSQL | 5432 | "Mi serve un database relazionale robusto per le mie app" |
-| MySQL | 3306 | "Ho bisogno di un database compatibile con Nextcloud e app PHP" |
-| Qdrant | 6333, 6334 | "Voglio fare ricerca semantica e RAG con i miei modelli AI" |
-| Redis | 6379 | "Mi serve una cache veloce e un sistema di code" |
-| Nextcloud | 8080 | "Voglio il mio cloud personale per file, calendario e contatti" |
-| Ollama | 11434 | "Voglio eseguire LLM in locale senza dipendere da API esterne" |
-
----
-
 ## Database
 
 ### PostgreSQL 16
@@ -108,10 +95,11 @@ Tutti i servizi comunicano attraverso una rete Docker interna (`internal`, drive
 
 ---
 
-## Riferimenti
+## Variabili D'ambiente
 
-- Per i servizi futuri pianificati, vedi [`future.md`](future.md)
 - Le credenziali sono gestite tramite variabili d'ambiente nel file `.env`
+
+-------------
 
 # Future Improvements
 
