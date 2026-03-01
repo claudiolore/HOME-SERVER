@@ -201,16 +201,45 @@ curl -s http://RASPBERRY_IP:9090/api/v1/targets | grep -o '"health":"[^"]*"'
 
 Al primo accesso su `http://RASPBERRY_IP:8080`:
 
-1. **Login admin** (credenziali dal `.env`):
-   - Username: valore di `NEXTCLOUD_ADMIN_USER` (default: `admin`)
-   - Password: valore di `NEXTCLOUD_ADMIN_PASSWORD`
-2. **Il database MySQL è già configurato automaticamente** grazie alle variabili `.env`:
-   - `MYSQL_USER` / `MYSQL_PASSWORD` → utente Nextcloud
-   - `MYSQL_DATABASE` → nome database (default: `nextcloud`)
-3. **Configura Redis** (opzionale, migliora le performance):
-   - Host: `redis`
-   - Porta: `6379`
-   - Password: valore di `REDIS_PASSWORD` dal `.env`
+### Configurazione Iniziale
+
+1. **Crea account amministratore**:
+   - Username: scegli un nome (es. `admin`)
+   - Password: scegli una password sicura
+
+2. **Data folder**: lascia il valore di default `/var/www/html/data`
+
+3. **Database - IMPORTANTE: Seleziona MySQL/MariaDB** (NON SQLite!):
+   - Clicca su **MySQL/MariaDB**
+   - **Database user**: valore di `NEXTCLOUD_MYSQL_USER` dal `.env`
+   - **Database password**: valore di `NEXTCLOUD_MYSQL_PASSWORD` dal `.env`
+   - **Database name**: valore di `NEXTCLOUD_MYSQL_DATABASE` dal `.env`
+   - **Database host**: `mysql`
+
+4. Clicca **Install**
+
+### Verifica credenziali database
+
+```bash
+# Visualizza le credenziali MySQL per Nextcloud
+cat .env | grep NEXTCLOUD_MYSQL
+```
+
+### Errore "Can't write into config directory"
+
+Se appare questo errore, sistema i permessi:
+
+```bash
+sudo chown -R 33:33 nextcloud/data
+docker compose restart nextcloud
+```
+
+### Configura Redis (opzionale, migliora le performance)
+
+Dopo l'installazione, in Impostazioni → Amministrazione:
+- Host: `redis`
+- Porta: `6379`
+- Password: valore di `REDIS_PASSWORD` dal `.env`
 
 ---
 

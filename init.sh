@@ -46,6 +46,9 @@ chown -R 1000:1000 qdrant/data
 # Uptime Kuma - UID 1000
 chown -R 1000:1000 uptime-kuma/data
 
+# MySQL - UID 999
+chown -R 999:999 mysql/data
+
 # Redis - UID 999
 chown -R 999:999 redis/data
 
