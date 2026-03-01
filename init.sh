@@ -29,9 +29,6 @@ mkdir -p uptime-kuma/data
 mkdir -p portainer/data
 mkdir -p homepage/config
 
-# Networking
-mkdir -p tailscale/data
-
 # Sicurezza
 mkdir -p vaultwarden/data
 

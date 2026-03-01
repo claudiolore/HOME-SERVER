@@ -137,19 +137,6 @@ Reverse proxy e load balancer moderno per Docker. Supporta auto-discovery dei co
 
 ---
 
-### Tailscale
-
-- **Container:** `tailscale`
-- **Immagine:** `tailscale/tailscale`
-- **Dati:** `./tailscale/data`
-- **Capabilities:** `NET_ADMIN`, `NET_RAW`
-
-VPN mesh basata su WireGuard che permette l'accesso remoto sicuro al server da qualsiasi dispositivo. Non richiede port forwarding o configurazione del router. L'autenticazione avviene tramite auth key configurabile nel `.env`.
-
-**Domanda a cui risponde:** *"Voglio accedere al mio server in modo sicuro da remoto, senza esporre porte su Internet."*
-
----
-
 ## Sicurezza
 
 ### Vaultwarden
@@ -279,7 +266,7 @@ Interfaccia web per interagire con Ollama, simile a ChatGPT ma completamente loc
 
 ## Rete
 
-Tutti i servizi comunicano attraverso una rete Docker interna (`internal`, driver bridge). Le porte sono esposte direttamente sull'host. Traefik è presente come reverse proxy in modalità base, pronto per essere configurato come punto di ingresso unico in futuro. L'accesso remoto avviene tramite Tailscale VPN.
+Tutti i servizi comunicano attraverso una rete Docker interna (`internal`, driver bridge). Le porte sono esposte direttamente sull'host. Traefik è presente come reverse proxy in modalità base, pronto per essere configurato come punto di ingresso unico in futuro. L'accesso remoto avviene tramite Tailscale installato nativamente sull'host.
 
 ---
 
@@ -287,7 +274,7 @@ Tutti i servizi comunicano attraverso una rete Docker interna (`internal`, drive
 
 - Le credenziali sono gestite tramite variabili d'ambiente nel file `.env`
 - Prometheus richiede un file di configurazione in `./prometheus/config/prometheus.yml`
-- Tailscale richiede un auth key generato dalla [console admin Tailscale](https://login.tailscale.com/admin/settings/keys)
+- Tailscale è installato nativamente sull'host (non in Docker) per massima affidabilità
 - Vaultwarden richiede un admin token per il pannello di amministrazione (`/admin`)
 
 -------------

@@ -110,24 +110,6 @@ services:
     networks:
       - internal
 
-  tailscale:
-    image: tailscale/tailscale
-    container_name: tailscale
-    restart: unless-stopped
-    cap_add:
-      - NET_ADMIN
-      - NET_RAW
-    devices:
-      - /dev/net/tun:/dev/net/tun
-    environment:
-      TS_AUTHKEY: ${TS_AUTHKEY}
-      TS_HOSTNAME: ${TS_HOSTNAME}
-      TS_STATE_DIR: /var/lib/tailscale
-    volumes:
-      - ./tailscale/data:/var/lib/tailscale
-    networks:
-      - internal
-
   # --- Sicurezza ---
 
   vaultwarden:

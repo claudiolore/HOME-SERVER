@@ -265,21 +265,6 @@ curl -s http://RASPBERRY_IP:8082/api/overview
 # Deve rispondere con un JSON contenente info su entrypoints e routers
 ```
 
-### Tailscale
-
-```bash
-# Verifica che il container Tailscale sia in esecuzione
-docker logs tailscale 2>&1 | tail -10
-
-# Verifica lo stato della connessione Tailscale
-docker exec tailscale tailscale status
-
-# Verifica l'IP Tailscale assegnato
-docker exec tailscale tailscale ip
-```
-
-**Nota:** Tailscale richiede un auth key valido nel `.env`. Se il container va in restart loop, verifica che `TS_AUTHKEY` sia corretto e non scaduto.
-
 ---
 
 ## 8. Test Sicurezza
@@ -324,7 +309,6 @@ docker logs nextcloud 2>&1 | tail -20
 docker logs grafana 2>&1 | tail -20
 docker logs open-webui 2>&1 | tail -20
 docker logs traefik 2>&1 | tail -20
-docker logs tailscale 2>&1 | tail -20
 docker logs vaultwarden 2>&1 | tail -20
 ```
 
@@ -351,18 +335,6 @@ Oppure sistema manualmente i permessi per il servizio specifico:
 | Qdrant | 1000 | `sudo chown -R 1000:1000 qdrant/data` |
 | Uptime Kuma | 1000 | `sudo chown -R 1000:1000 uptime-kuma/data` |
 | Redis | 999 | `sudo chown -R 999:999 redis/data` |
-
-### Tailscale non si connette
-
-Se il container `tailscale` va in restart loop:
-
-1. Verifica che `TS_AUTHKEY` nel `.env` sia valido e non scaduto
-2. Genera un nuovo auth key da https://login.tailscale.com/admin/settings/keys
-3. Aggiorna `.env` e riavvia:
-
-```bash
-docker compose restart tailscale
-```
 
 ### Servizio non risponde
 
