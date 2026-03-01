@@ -193,38 +193,6 @@ Dashboard personale con link a tutti i servizi del server. Mostra widget con inf
 
 ---
 
-### Watchtower
-
-- **Container:** `watchtower`
-- **Immagine:** `containrrr/watchtower:latest`
-- **Modalità:** Monitor-only (non aggiorna automaticamente)
-
-Controlla periodicamente se ci sono nuove versioni delle immagini Docker. Configurato in **modalità monitor-only**: rileva gli aggiornamenti disponibili e invia notifiche via email, ma **non applica gli aggiornamenti automaticamente**. Questo permette di controllare manualmente quando aggiornare, evitando breaking changes inaspettati.
-
-**Configurazione:**
-- `WATCHTOWER_MONITOR_ONLY=true` — Solo monitoraggio, niente aggiornamenti automatici
-- `WATCHTOWER_POLL_INTERVAL` — Intervallo di controllo (default: 86400s = 24h)
-- Notifiche email configurabili via variabili SMTP nel `.env`
-
-**Comandi utili:**
-
-```bash
-# Controlla aggiornamenti disponibili (senza applicarli)
-docker exec watchtower /watchtower --run-once
-
-# Aggiorna manualmente un servizio specifico
-docker compose pull <nome-servizio>
-docker compose up -d <nome-servizio>
-
-# Aggiorna manualmente tutti i servizi
-docker compose pull
-docker compose up -d
-```
-
-**Domanda a cui risponde:** *"Avvisami quando ci sono aggiornamenti, ma decido io quando applicarli."*
-
----
-
 ## AI
 
 ### Ollama
