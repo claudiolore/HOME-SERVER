@@ -123,6 +123,48 @@ UI web per controllare Docker: start/stop/restart container, vedere volumi, reti
 
 ---
 
+## Networking
+
+### Traefik
+
+- **Container:** `traefik`
+- **Porte:** `80` (HTTP), `443` (HTTPS), `8082` (Dashboard)
+- **Immagine:** `traefik:v3.0`
+
+Reverse proxy e load balancer moderno per Docker. Supporta auto-discovery dei container tramite labels, certificati HTTPS automatici con Let's Encrypt, e routing intelligente. Al momento è configurato in modalità base con la dashboard abilitata, pronto per essere attivato come proxy per gli altri servizi in futuro.
+
+**Domanda a cui risponde:** *"Voglio un punto di ingresso unico per tutti i miei servizi, con HTTPS automatico."*
+
+---
+
+### Tailscale
+
+- **Container:** `tailscale`
+- **Immagine:** `tailscale/tailscale`
+- **Dati:** `./tailscale/data`
+- **Capabilities:** `NET_ADMIN`, `NET_RAW`
+
+VPN mesh basata su WireGuard che permette l'accesso remoto sicuro al server da qualsiasi dispositivo. Non richiede port forwarding o configurazione del router. L'autenticazione avviene tramite auth key configurabile nel `.env`.
+
+**Domanda a cui risponde:** *"Voglio accedere al mio server in modo sicuro da remoto, senza esporre porte su Internet."*
+
+---
+
+## Sicurezza
+
+### Vaultwarden
+
+- **Container:** `vaultwarden`
+- **Porta:** `8222`
+- **Immagine:** `vaultwarden/server`
+- **Dati:** `./vaultwarden/data`
+
+Implementazione leggera e self-hosted del server Bitwarden. Permette di gestire password, note sicure, carte di credito e identità. Compatibile con tutte le app client Bitwarden (browser, mobile, desktop). Il pannello admin è accessibile su `/admin` con il token configurato nel `.env`.
+
+**Domanda a cui risponde:** *"Voglio gestire le mie password in modo sicuro senza affidarmi a servizi cloud."*
+
+---
+
 ## Monitoring
 
 ### Uptime Kuma
@@ -237,7 +279,7 @@ Interfaccia web per interagire con Ollama, simile a ChatGPT ma completamente loc
 
 ## Rete
 
-Tutti i servizi comunicano attraverso una rete Docker interna (`internal`, driver bridge). Le porte sono esposte direttamente sull'host — al momento non c'è un reverse proxy con HTTPS (vedi Future Improvements per l'evoluzione con Traefik).
+Tutti i servizi comunicano attraverso una rete Docker interna (`internal`, driver bridge). Le porte sono esposte direttamente sull'host. Traefik è presente come reverse proxy in modalità base, pronto per essere configurato come punto di ingresso unico in futuro. L'accesso remoto avviene tramite Tailscale VPN.
 
 ---
 
@@ -245,6 +287,8 @@ Tutti i servizi comunicano attraverso una rete Docker interna (`internal`, drive
 
 - Le credenziali sono gestite tramite variabili d'ambiente nel file `.env`
 - Prometheus richiede un file di configurazione in `./prometheus/config/prometheus.yml`
+- Tailscale richiede un auth key generato dalla [console admin Tailscale](https://login.tailscale.com/admin/settings/keys)
+- Vaultwarden richiede un admin token per il pannello di amministrazione (`/admin`)
 
 -------------
 
@@ -252,10 +296,4 @@ Tutti i servizi comunicano attraverso una rete Docker interna (`internal`, drive
 
 ## Infrastruttura / Networking
 
-- **Traefik** — reverse proxy con HTTPS automatico (ora tutto è su porte esposte, niente TLS)
-- **Tailscale** — VPN per accesso remoto sicuro
-
-## Sicurezza / Backup
-
-- **Duplicati** o **Restic** — backup automatici
-- **Vaultwarden** — password manager (Bitwarden self-hosted)
+- **Traefik routing completo** — configurare labels sui servizi esistenti per routing tramite Traefik con HTTPS automatico (Let's Encrypt)

@@ -53,3 +53,18 @@
         href: http://100.114.47.75:8080
         description: Personal Cloud
         icon: nextcloud
+
+- Networking:
+    - Traefik:
+        href: http://100.114.47.75:8082
+        description: Reverse Proxy
+        icon: traefik
+    - Tailscale:
+        description: VPN Mesh
+        icon: tailscale
+
+- Sicurezza:
+    - Vaultwarden:
+        href: http://100.114.47.75:8222
+        description: Password Manager
+        icon: vaultwarden

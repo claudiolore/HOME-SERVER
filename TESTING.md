@@ -16,6 +16,7 @@ Sostituisci `RASPBERRY_IP` con l'IP del tuo Raspberry Pi (es. `192.168.1.100`).
 | **MySQL (root)** | `root` | `MYSQL_ROOT_PASSWORD` |
 | **MySQL (app)** | `MYSQL_USER` | `MYSQL_PASSWORD` |
 | **Redis** | - | `REDIS_PASSWORD` |
+| **Vaultwarden** | - | `VAULTWARDEN_ADMIN_TOKEN` (per `/admin`) |
 
 ### Servizi con account da creare al primo accesso
 
@@ -24,6 +25,7 @@ Sostituisci `RASPBERRY_IP` con l'IP del tuo Raspberry Pi (es. `192.168.1.100`).
 | **Portainer** | Crea admin entro 5 minuti dal primo avvio |
 | **Uptime Kuma** | Crea account al primo accesso |
 | **Open WebUI** | Registra un account al primo accesso |
+| **Vaultwarden** | Crea account dal client Bitwarden o dall'interfaccia web |
 
 ### Servizi senza autenticazione
 
@@ -32,6 +34,7 @@ Sostituisci `RASPBERRY_IP` con l'IP del tuo Raspberry Pi (es. `192.168.1.100`).
 | **Homepage** | Dashboard pubblica |
 | **Prometheus** | Metriche accessibili direttamente |
 | **Dozzle** | Log viewer senza login |
+| **Traefik** | Dashboard accessibile senza login |
 
 ---
 
@@ -91,6 +94,9 @@ docker ps -a --filter "status=restarting"
 | **Uptime Kuma** | `http://RASPBERRY_IP:3001` | Crea account | Scegli username/password al primo accesso |
 | **Dozzle** | `http://RASPBERRY_IP:8888` | Nessuna | Accesso diretto |
 | **Open WebUI** | `http://RASPBERRY_IP:8081` | Crea account | Registra un account al primo accesso |
+| **Traefik** | `http://RASPBERRY_IP:8082` | Nessuna | Dashboard accessibile direttamente |
+| **Vaultwarden** | `http://RASPBERRY_IP:8222` | Crea account | Registra dal client Bitwarden |
+| **Vaultwarden Admin** | `http://RASPBERRY_IP:8222/admin` | Da .env | `VAULTWARDEN_ADMIN_TOKEN` |
 
 ---
 
@@ -243,7 +249,68 @@ Dopo l'installazione, in Impostazioni → Amministrazione:
 
 ---
 
-## 7. Checklist Finale
+## 7. Test Networking
+
+### Traefik
+
+```bash
+# Verifica che la dashboard Traefik risponda
+curl -s http://RASPBERRY_IP:8082/api/overview | jq '.http'
+
+# Verifica che Traefik veda i provider Docker
+curl -s http://RASPBERRY_IP:8082/api/providers | jq '.'
+
+# Alternativa senza jq:
+curl -s http://RASPBERRY_IP:8082/api/overview
+# Deve rispondere con un JSON contenente info su entrypoints e routers
+```
+
+### Tailscale
+
+```bash
+# Verifica che il container Tailscale sia in esecuzione
+docker logs tailscale 2>&1 | tail -10
+
+# Verifica lo stato della connessione Tailscale
+docker exec tailscale tailscale status
+
+# Verifica l'IP Tailscale assegnato
+docker exec tailscale tailscale ip
+```
+
+**Nota:** Tailscale richiede un auth key valido nel `.env`. Se il container va in restart loop, verifica che `TS_AUTHKEY` sia corretto e non scaduto.
+
+---
+
+## 8. Test Sicurezza
+
+### Vaultwarden
+
+```bash
+# Verifica che Vaultwarden risponda
+curl -s http://RASPBERRY_IP:8222/ | head -5
+# Deve rispondere con HTML della pagina di login
+
+# Verifica che il pannello admin sia accessibile
+curl -s -o /dev/null -w "%{http_code}" http://RASPBERRY_IP:8222/admin
+# Deve rispondere: 200
+```
+
+**Setup:**
+1. Vai su `http://RASPBERRY_IP:8222`
+2. Crea un account con email e master password
+3. Installa l'estensione browser Bitwarden
+4. Nelle impostazioni dell'estensione, imposta il server URL: `http://RASPBERRY_IP:8222`
+5. Effettua il login con l'account creato
+
+**Admin Panel:**
+1. Vai su `http://RASPBERRY_IP:8222/admin`
+2. Inserisci il `VAULTWARDEN_ADMIN_TOKEN` dal `.env`
+3. Verifica che la dashboard admin si carichi correttamente
+
+---
+
+## 9. Checklist Finale
 
 ```bash
 # Verifica memoria e CPU
@@ -256,6 +323,9 @@ df -h
 docker logs nextcloud 2>&1 | tail -20
 docker logs grafana 2>&1 | tail -20
 docker logs open-webui 2>&1 | tail -20
+docker logs traefik 2>&1 | tail -20
+docker logs tailscale 2>&1 | tail -20
+docker logs vaultwarden 2>&1 | tail -20
 ```
 
 ---
@@ -281,6 +351,18 @@ Oppure sistema manualmente i permessi per il servizio specifico:
 | Qdrant | 1000 | `sudo chown -R 1000:1000 qdrant/data` |
 | Uptime Kuma | 1000 | `sudo chown -R 1000:1000 uptime-kuma/data` |
 | Redis | 999 | `sudo chown -R 999:999 redis/data` |
+
+### Tailscale non si connette
+
+Se il container `tailscale` va in restart loop:
+
+1. Verifica che `TS_AUTHKEY` nel `.env` sia valido e non scaduto
+2. Genera un nuovo auth key da https://login.tailscale.com/admin/settings/keys
+3. Aggiorna `.env` e riavvia:
+
+```bash
+docker compose restart tailscale
+```
 
 ### Servizio non risponde
 

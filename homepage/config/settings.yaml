@@ -26,3 +26,9 @@ layout:
   Cloud:
     style: row
     columns: 2
+  Networking:
+    style: row
+    columns: 2
+  Sicurezza:
+    style: row
+    columns: 2
