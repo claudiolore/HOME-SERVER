@@ -1,5 +1,9 @@
 services:
 
+  # ---------------------------------------------------------------------------
+  # DATABASE (accesso diretto, non proxati da Traefik)
+  # ---------------------------------------------------------------------------
+
   postgres:
     image: postgres:16
     container_name: postgres
@@ -30,18 +34,6 @@ services:
     networks:
       - internal
 
-  qdrant:
-    image: qdrant/qdrant:latest
-    container_name: qdrant
-    restart: unless-stopped
-    volumes:
-      - ./qdrant/data:/qdrant/storage
-    ports:
-      - "6333:6333"
-      - "6334:6334"
-    networks:
-      - internal
-
   redis:
     image: redis:7-alpine
     container_name: redis
@@ -54,28 +46,21 @@ services:
     networks:
       - internal
 
-  nextcloud:
-    image: nextcloud:latest
-    container_name: nextcloud
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: qdrant
     restart: unless-stopped
-    ports:
-      - "8080:80"
     volumes:
-      - ./nextcloud/data:/var/www/html
-    environment:
-      NEXTCLOUD_ADMIN_USER: ${NEXTCLOUD_ADMIN_USER}
-      NEXTCLOUD_ADMIN_PASSWORD: ${NEXTCLOUD_ADMIN_PASSWORD}
-      NEXTCLOUD_DB_HOST: mysql
-      NEXTCLOUD_DB_NAME: ${NEXTCLOUD_MYSQL_DATABASE}
-      NEXTCLOUD_DB_USER: ${NEXTCLOUD_MYSQL_USER}
-      NEXTCLOUD_DB_PASSWORD: ${NEXTCLOUD_MYSQL_PASSWORD}
-      REDIS_HOST: redis
-      REDIS_HOST_PASSWORD: ${REDIS_PASSWORD}
-    depends_on:
-      - mysql
-      - redis
+      - ./qdrant/data:/qdrant/storage
+    ports:
+      - "6333:6333"
+      - "6334:6334"
     networks:
       - internal
+
+  # ---------------------------------------------------------------------------
+  # AI (Ollama esposto direttamente, Open WebUI via Traefik)
+  # ---------------------------------------------------------------------------
 
   ollama:
     image: ollama/ollama:latest
@@ -88,7 +73,62 @@ services:
     networks:
       - internal
 
-  # --- Networking ---
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    restart: unless-stopped
+    environment:
+      OLLAMA_BASE_URL: http://ollama:11434
+    volumes:
+      - ./open-webui/data:/app/backend/data
+    depends_on:
+      - ollama
+    networks:
+      - internal
+    labels:
+      - "traefik.enable=true"
+      # Raggiungibile su: http://ai.${DOMAIN}
+      - "traefik.http.routers.open-webui.rule=Host(`ai.${DOMAIN}`)"
+      - "traefik.http.routers.open-webui.entrypoints=web"
+      - "traefik.http.services.open-webui.loadbalancer.server.port=8080"
+
+  # ---------------------------------------------------------------------------
+  # CLOUD
+  # ---------------------------------------------------------------------------
+
+  nextcloud:
+    image: nextcloud:latest
+    container_name: nextcloud
+    restart: unless-stopped
+    volumes:
+      - ./nextcloud/data:/var/www/html
+    environment:
+      NEXTCLOUD_ADMIN_USER: ${NEXTCLOUD_ADMIN_USER}
+      NEXTCLOUD_ADMIN_PASSWORD: ${NEXTCLOUD_ADMIN_PASSWORD}
+      NEXTCLOUD_DB_HOST: mysql
+      NEXTCLOUD_DB_NAME: ${NEXTCLOUD_MYSQL_DATABASE}
+      NEXTCLOUD_DB_USER: ${NEXTCLOUD_MYSQL_USER}
+      NEXTCLOUD_DB_PASSWORD: ${NEXTCLOUD_MYSQL_PASSWORD}
+      REDIS_HOST: redis
+      REDIS_HOST_PASSWORD: ${REDIS_PASSWORD}
+      # Necessario affinché Nextcloud accetti richieste via Traefik
+      NEXTCLOUD_TRUSTED_DOMAINS: nextcloud.${DOMAIN}
+      OVERWRITEPROTOCOL: http
+    depends_on:
+      - mysql
+      - redis
+    networks:
+      - internal
+    labels:
+      - "traefik.enable=true"
+      # Raggiungibile su: http://nextcloud.${DOMAIN}
+      - "traefik.http.routers.nextcloud.rule=Host(`nextcloud.${DOMAIN}`)"
+      - "traefik.http.routers.nextcloud.entrypoints=web"
+      - "traefik.http.services.nextcloud.loadbalancer.server.port=80"
+
+  # ---------------------------------------------------------------------------
+  # NETWORKING (Traefik stesso)
+  # ---------------------------------------------------------------------------
 
   traefik:
     image: traefik:v3.0
@@ -96,8 +136,9 @@ services:
     restart: unless-stopped
     command:
       - "--api.dashboard=true"
-      - "--api.insecure=true"
+      # Docker provider: scopre automaticamente i container con labels
       - "--providers.docker=true"
+      # Solo i container con traefik.enable=true vengono esposti
       - "--providers.docker.exposedbydefault=false"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
@@ -106,11 +147,18 @@ services:
     ports:
       - "80:80"
       - "443:443"
-      - "8082:8080"
     networks:
       - internal
+    labels:
+      - "traefik.enable=true"
+      # Dashboard raggiungibile su: http://traefik.${DOMAIN}/dashboard/
+      - "traefik.http.routers.traefik.rule=Host(`traefik.${DOMAIN}`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
+      - "traefik.http.routers.traefik.entrypoints=web"
+      - "traefik.http.routers.traefik.service=api@internal"
 
-  # --- Sicurezza ---
+  # ---------------------------------------------------------------------------
+  # SICUREZZA
+  # ---------------------------------------------------------------------------
 
   vaultwarden:
     image: vaultwarden/server
@@ -120,12 +168,18 @@ services:
       ADMIN_TOKEN: ${VAULTWARDEN_ADMIN_TOKEN}
     volumes:
       - ./vaultwarden/data:/data
-    ports:
-      - "8222:80"
     networks:
       - internal
+    labels:
+      - "traefik.enable=true"
+      # Raggiungibile su: http://vaultwarden.${DOMAIN}
+      - "traefik.http.routers.vaultwarden.rule=Host(`vaultwarden.${DOMAIN}`)"
+      - "traefik.http.routers.vaultwarden.entrypoints=web"
+      - "traefik.http.services.vaultwarden.loadbalancer.server.port=80"
 
-  # --- Gestione Container ---
+  # ---------------------------------------------------------------------------
+  # GESTIONE CONTAINER
+  # ---------------------------------------------------------------------------
 
   portainer:
     image: portainer/portainer-ce:latest
@@ -134,12 +188,18 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./portainer/data:/data
-    ports:
-      - "9000:9000"
     networks:
       - internal
+    labels:
+      - "traefik.enable=true"
+      # Raggiungibile su: http://portainer.${DOMAIN}
+      - "traefik.http.routers.portainer.rule=Host(`portainer.${DOMAIN}`)"
+      - "traefik.http.routers.portainer.entrypoints=web"
+      - "traefik.http.services.portainer.loadbalancer.server.port=9000"
 
-  # --- Monitoring ---
+  # ---------------------------------------------------------------------------
+  # MONITORING
+  # ---------------------------------------------------------------------------
 
   uptime-kuma:
     image: louislam/uptime-kuma:latest
@@ -147,10 +207,14 @@ services:
     restart: unless-stopped
     volumes:
       - ./uptime-kuma/data:/app/data
-    ports:
-      - "3001:3001"
     networks:
       - internal
+    labels:
+      - "traefik.enable=true"
+      # Raggiungibile su: http://uptime.${DOMAIN}
+      - "traefik.http.routers.uptime-kuma.rule=Host(`uptime.${DOMAIN}`)"
+      - "traefik.http.routers.uptime-kuma.entrypoints=web"
+      - "traefik.http.services.uptime-kuma.loadbalancer.server.port=3001"
 
   prometheus:
     image: prom/prometheus:latest
@@ -159,10 +223,14 @@ services:
     volumes:
       - ./prometheus/config:/etc/prometheus
       - ./prometheus/data:/prometheus
-    ports:
-      - "9090:9090"
     networks:
       - internal
+    labels:
+      - "traefik.enable=true"
+      # Raggiungibile su: http://prometheus.${DOMAIN}
+      - "traefik.http.routers.prometheus.rule=Host(`prometheus.${DOMAIN}`)"
+      - "traefik.http.routers.prometheus.entrypoints=web"
+      - "traefik.http.services.prometheus.loadbalancer.server.port=9090"
 
   grafana:
     image: grafana/grafana:latest
@@ -173,12 +241,16 @@ services:
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
     volumes:
       - ./grafana/data:/var/lib/grafana
-    ports:
-      - "3000:3000"
     depends_on:
       - prometheus
     networks:
       - internal
+    labels:
+      - "traefik.enable=true"
+      # Raggiungibile su: http://grafana.${DOMAIN}
+      - "traefik.http.routers.grafana.rule=Host(`grafana.${DOMAIN}`)"
+      - "traefik.http.routers.grafana.entrypoints=web"
+      - "traefik.http.services.grafana.loadbalancer.server.port=3000"
 
   dozzle:
     image: amir20/dozzle:latest
@@ -186,12 +258,18 @@ services:
     restart: unless-stopped
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-    ports:
-      - "8888:8080"
     networks:
       - internal
+    labels:
+      - "traefik.enable=true"
+      # Raggiungibile su: http://dozzle.${DOMAIN}
+      - "traefik.http.routers.dozzle.rule=Host(`dozzle.${DOMAIN}`)"
+      - "traefik.http.routers.dozzle.entrypoints=web"
+      - "traefik.http.services.dozzle.loadbalancer.server.port=8080"
 
-  # --- Media / Utilità ---
+  # ---------------------------------------------------------------------------
+  # DASHBOARD
+  # ---------------------------------------------------------------------------
 
   homepage:
     image: ghcr.io/gethomepage/homepage:latest
@@ -202,27 +280,14 @@ services:
     volumes:
       - ./homepage/config:/app/config
       - /var/run/docker.sock:/var/run/docker.sock:ro
-    ports:
-      - "3002:3000"
     networks:
       - internal
-
-  # --- AI ---
-
-  open-webui:
-    image: ghcr.io/open-webui/open-webui:main
-    container_name: open-webui
-    restart: unless-stopped
-    environment:
-      OLLAMA_BASE_URL: http://ollama:11434
-    volumes:
-      - ./open-webui/data:/app/backend/data
-    ports:
-      - "8081:8080"
-    depends_on:
-      - ollama
-    networks:
-      - internal
+    labels:
+      - "traefik.enable=true"
+      # Homepage è la root del dominio: http://${DOMAIN}
+      - "traefik.http.routers.homepage.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.homepage.entrypoints=web"
+      - "traefik.http.services.homepage.loadbalancer.server.port=3000"
 
 networks:
   internal:
