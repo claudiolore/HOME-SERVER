@@ -1,221 +1,216 @@
-# Guida: Tailscale + MagicDNS per il Home Server
+# Guida: Tailscale + Dominio Proprio per il Home Server
 
-Questa guida spiega come configurare Tailscale sul server e sui tuoi dispositivi
-in modo che tutti i servizi siano raggiungibili via sottodominio (es. `grafana.nomemacchina.ts.net`)
-senza toccare DNS manuali o file `/etc/hosts`.
+Questa guida configura l'accesso ai servizi tramite sottodomini puliti
+(es. `grafana.TUODOMINIO.COM`) usando il tuo dominio esistente e Tailscale
+come VPN privata.
+
+**Risultato finale:**
+
+| Servizio     | URL                                  |
+|--------------|--------------------------------------|
+| Homepage     | `http://TUODOMINIO.COM`              |
+| Nextcloud    | `http://nextcloud.TUODOMINIO.COM`    |
+| Grafana      | `http://grafana.TUODOMINIO.COM`      |
+| Portainer    | `http://portainer.TUODOMINIO.COM`    |
+| Vaultwarden  | `http://vaultwarden.TUODOMINIO.COM`  |
+| Open WebUI   | `http://ai.TUODOMINIO.COM`           |
+| Traefik      | `http://traefik.TUODOMINIO.COM/dashboard/` |
+| ...          | ...                                  |
+
+> Sostituisci `TUODOMINIO.COM` con il tuo dominio reale in tutta la guida.
 
 ---
 
-## 1. Cos'è Tailscale
+## Come funziona (concetto chiave)
 
-Tailscale è una VPN mesh basata su WireGuard. Crea una rete privata virtuale
-tra tutti i tuoi dispositivi (server, PC, telefono, ecc.) usando indirizzi IP
-stabili nel range `100.x.x.x`, indipendentemente da dove si trovano fisicamente.
+```
+Il tuo PC (connesso a Tailscale)
+    │
+    │  digita: grafana.TUODOMINIO.COM
+    ▼
+DNS pubblico risolve → 100.114.47.75   ← IP Tailscale del server
+    │
+    │  (solo i device nella tua tailnet raggiungono questo IP)
+    ▼
+Traefik sul server
+    │
+    │  legge l'header Host: grafana.TUODOMINIO.COM
+    ▼
+Grafana :3000
+```
 
-**MagicDNS** è la funzione che assegna automaticamente un nome DNS a ogni
-macchina nella tua tailnet, risolvendo il problema del DNS senza configurazione manuale.
+**Perché è sicuro:** l'IP `100.x.x.x` è un indirizzo Tailscale privato.
+Anche se il record DNS è pubblico e chiunque può risolverlo, nessuno
+può raggiungerlo senza essere connesso alla tua tailnet.
+I servizi restano **privati per design**.
 
 ---
 
-## 2. Installare Tailscale sul server
+## Passo 1 — Installare Tailscale sul server
 
 ```bash
-# Installa Tailscale
 curl -fsSL https://tailscale.com/install.sh | sh
-
-# Avvia e autenticati (si apre un link nel browser)
 sudo tailscale up
+```
 
-# Verifica che il server sia online
+All'esecuzione di `tailscale up` viene mostrato un link: aprilo nel browser
+e autenticati con il tuo account Tailscale.
+
+Verifica che il server sia online e annota il suo IP Tailscale:
+
+```bash
 tailscale status
+# Esempio output:
+# 100.114.47.75   myhomeserver   user@email.com  linux   -
 ```
-
-L'output di `tailscale status` mostrerà qualcosa come:
-
-```
-100.114.47.75   myhomeserver   user@email.com  linux   -
-```
-
-Annota il **nome macchina** (es. `myhomeserver`) — ti servirà dopo.
 
 ---
 
-## 3. Installare Tailscale sui client
+## Passo 2 — Installare Tailscale sui client
 
-Installa l'app Tailscale su ogni dispositivo da cui vuoi accedere al server:
+Installa l'app su ogni dispositivo che userai per accedere ai servizi.
+Accedi sempre con lo **stesso account** Tailscale.
 
-| Dispositivo | Link |
-|-------------|------|
+| Dispositivo | Download |
+|-------------|----------|
 | Windows     | https://tailscale.com/download/windows |
 | macOS       | https://tailscale.com/download/mac |
 | Linux       | `curl -fsSL https://tailscale.com/install.sh \| sh` |
 | iPhone/iPad | App Store → "Tailscale" |
 | Android     | Play Store → "Tailscale" |
 
-Accedi con lo **stesso account** usato sul server.
+---
+
+## Passo 3 — Aggiungere il record DNS wildcard
+
+Accedi al pannello DNS del tuo registrar (Cloudflare, Namecheap, ecc.)
+e aggiungi **un solo record**:
+
+| Campo  | Valore                        |
+|--------|-------------------------------|
+| Tipo   | `A`                           |
+| Nome   | `*` (wildcard)                |
+| Valore | `100.114.47.75` ← il tuo IP Tailscale |
+| TTL    | Auto / 300                    |
+| Proxy  | **Disabilitato** (DNS only, niente arancione Cloudflare) |
+
+> **Perché disabilitare il proxy Cloudflare?**
+> Il proxy di Cloudflare instraderebbe il traffico attraverso i server
+> Cloudflare, ma l'IP di destinazione è privato (Tailscale) e non
+> raggiungibile da internet. Con il proxy disabilitato, il DNS restituisce
+> direttamente l'IP Tailscale al client, che ci si connette direttamente.
+
+Il record `*` copre **tutti** i sottodomini con un'unica voce:
+`grafana.TUODOMINIO.COM`, `nextcloud.TUODOMINIO.COM`, ecc.
+
+Aggiungi anche un record per il dominio root se vuoi che `TUODOMINIO.COM`
+(senza sottodominio) punti a Homepage:
+
+| Campo  | Valore          |
+|--------|-----------------|
+| Tipo   | `A`             |
+| Nome   | `@`             |
+| Valore | `100.114.47.75` |
 
 ---
 
-## 4. Abilitare MagicDNS
-
-1. Vai su [https://login.tailscale.com/admin/dns](https://login.tailscale.com/admin/dns)
-2. Nella sezione **MagicDNS**, clicca **Enable MagicDNS**
-3. Nella sezione **Nameservers**, aggiungi un nameserver globale (es. `1.1.1.1` di Cloudflare)
-   — serve per risolvere i domini internet normali mentre sei connesso in Tailscale
-
-Dopo l'attivazione, ogni macchina nella tua tailnet è raggiungibile con:
-```
-nomemacchina.nome-tailnet.ts.net
-```
-
-Puoi trovare il nome completo della tua tailnet nel pannello admin → **DNS** → **Tailnet name**.
-
----
-
-## 5. Trovare il tuo dominio Tailscale
-
-Sul server, esegui:
-
-```bash
-tailscale status --json | python3 -c "
-import json, sys
-d = json.load(sys.stdin)
-me = d['Self']
-print('IP Tailscale: ', me['TailscaleIPs'][0])
-print('Nome DNS:     ', me['DNSName'].rstrip('.'))
-"
-```
-
-Output di esempio:
-```
-IP Tailscale:  100.114.47.75
-Nome DNS:      myhomeserver.tail1234abc.ts.net
-```
-
----
-
-## 6. Configurare il `.env` del Home Server
-
-Copia `.env.example` in `.env` e imposta `DOMAIN` con il nome DNS della tua macchina:
+## Passo 4 — Configurare il `.env`
 
 ```bash
 cp .env.example .env
 ```
 
-Modifica `.env`:
+Apri `.env` e imposta:
 
 ```env
-# Metti qui il nome DNS completo del tuo server Tailscale
-DOMAIN=myhomeserver.tail1234abc.ts.net
+DOMAIN=TUODOMINIO.COM
 ```
 
-> **Importante:** non usare il prefisso `http://` — solo il nome dominio.
+Compila anche tutte le altre variabili con le tue password reali.
 
 ---
 
-## 7. Configurare i sottodomini wildcard (opzionale ma consigliato)
-
-Per default, MagicDNS risolve solo `myhomeserver.tail1234abc.ts.net`.
-I sottodomini come `grafana.myhomeserver.tail1234abc.ts.net` **non** vengono
-risolti automaticamente da Tailscale.
-
-### Soluzione A — Split DNS con nameserver locale (Pi-hole / AdGuard Home)
-
-Se hai Pi-hole o AdGuard Home nella tua rete:
-
-1. Aggiungi un record DNS wildcard nel tuo resolver locale:
-   ```
-   *.myhomeserver.tail1234abc.ts.net → 100.114.47.75
-   ```
-2. Nel pannello Tailscale → **DNS** → **Nameservers**, aggiungi il tuo resolver
-   come nameserver per il dominio `.ts.net` (Split DNS).
-
-### Soluzione B — `/etc/hosts` su ogni client (più semplice)
-
-Su ogni dispositivo client aggiungi queste righe al file hosts:
-
-**Linux / macOS:** `/etc/hosts`
-**Windows:** `C:\Windows\System32\drivers\etc\hosts`
-
-```
-100.114.47.75  myhomeserver.tail1234abc.ts.net
-100.114.47.75  nextcloud.myhomeserver.tail1234abc.ts.net
-100.114.47.75  vaultwarden.myhomeserver.tail1234abc.ts.net
-100.114.47.75  portainer.myhomeserver.tail1234abc.ts.net
-100.114.47.75  grafana.myhomeserver.tail1234abc.ts.net
-100.114.47.75  prometheus.myhomeserver.tail1234abc.ts.net
-100.114.47.75  uptime.myhomeserver.tail1234abc.ts.net
-100.114.47.75  dozzle.myhomeserver.tail1234abc.ts.net
-100.114.47.75  ai.myhomeserver.tail1234abc.ts.net
-100.114.47.75  traefik.myhomeserver.tail1234abc.ts.net
-```
-
-### Soluzione C — Usare un dominio pubblico (se ce l'hai)
-
-Se possiedi un dominio (es. `esempio.com`), puoi:
-1. Aggiungere un record A wildcard: `*.homeserver.esempio.com → 100.114.47.75`
-2. Impostare `DOMAIN=homeserver.esempio.com` nel `.env`
-
-Questo funziona da qualsiasi rete, anche fuori Tailscale, purché il server
-sia raggiungibile (o punti all'IP Tailscale e tutti i client usino Tailscale).
-
----
-
-## 8. Avviare i servizi
+## Passo 5 — Avviare i servizi
 
 ```bash
-# Prima avvio
+# Crea le directory e i permessi necessari
 bash init.sh
+
+# Avvia tutti i container
 docker compose up -d
 
-# Verifica che Traefik sia attivo
-docker logs traefik --tail 20
+# Controlla che Traefik sia partito senza errori
+docker logs traefik --tail 30
 ```
 
 ---
 
-## 9. Verificare il routing
+## Passo 6 — Verificare
 
-Apri il browser su un dispositivo connesso a Tailscale e prova:
+Connettiti a Tailscale dal tuo PC e apri nel browser:
 
-| URL | Risultato atteso |
-|-----|-----------------|
-| `http://myhomeserver.tail1234abc.ts.net` | Homepage dashboard |
-| `http://traefik.myhomeserver.tail1234abc.ts.net/dashboard/` | Traefik dashboard |
-| `http://grafana.myhomeserver.tail1234abc.ts.net` | Grafana |
-| `http://portainer.myhomeserver.tail1234abc.ts.net` | Portainer |
+```
+http://traefik.TUODOMINIO.COM/dashboard/
+```
 
-Se il dashboard Traefik è raggiungibile, il routing funziona correttamente.
+Se vedi il dashboard Traefik, il routing funziona.
+Dovresti vedere nella sezione **HTTP Routers** tutti i servizi configurati.
+
+Poi prova gli altri servizi uno alla volta:
+
+```
+http://TUODOMINIO.COM              → Homepage
+http://grafana.TUODOMINIO.COM      → Grafana
+http://portainer.TUODOMINIO.COM    → Portainer
+http://nextcloud.TUODOMINIO.COM    → Nextcloud
+```
 
 ---
 
-## 10. Troubleshooting
+## Troubleshooting
 
 **Il browser non trova il dominio:**
 ```bash
 # Verifica che Tailscale sia connesso sul client
 tailscale status
 
-# Prova a pingare il server dal client
+# Verifica che il DNS risolva correttamente
+nslookup grafana.TUODOMINIO.COM
+# Deve rispondere con 100.x.x.x (IP Tailscale)
+
+# Prova a pingare il server
 ping 100.114.47.75
-
-# Verifica che Traefik sia in ascolto sulla porta 80
-docker ps | grep traefik
 ```
 
-**Traefik non routa al servizio giusto:**
+**Il DNS risolve ma la pagina non si apre:**
 ```bash
-# Controlla i logs di Traefik
-docker logs traefik --tail 50
+# Verifica che Traefik sia in ascolto
+docker ps | grep traefik
 
-# Verifica che i labels siano stati letti correttamente
-# apri http://traefik.DOMAIN/dashboard/ → sezione "HTTP Routers"
+# Controlla i log di Traefik
+docker logs traefik --tail 50
 ```
+
+**Traefik risponde ma il servizio sbagliato (o 404):**
+Apri `http://traefik.TUODOMINIO.COM/dashboard/` → sezione **HTTP Routers**
+e verifica che la rule del servizio sia corretta.
 
 **Nextcloud dà errore "untrusted domain":**
-Assicurati che `NEXTCLOUD_TRUSTED_DOMAINS` nel `.env` contenga il dominio esatto
-con cui stai accedendo:
+Nel `.env` verifica che sia presente:
 ```env
-NEXTCLOUD_TRUSTED_DOMAINS=nextcloud.myhomeserver.tail1234abc.ts.net
+NEXTCLOUD_TRUSTED_DOMAINS=nextcloud.TUODOMINIO.COM
 ```
-Poi riavvia: `docker compose restart nextcloud`
+Poi:
+```bash
+docker compose restart nextcloud
+```
+
+---
+
+## Aggiungere HTTPS con Let's Encrypt (opzionale)
+
+Una volta che tutto funziona in HTTP, aggiungere HTTPS è semplice.
+Richiede che il tuo dominio sia raggiungibile pubblicamente sulla porta 443
+(o che usi la DNS challenge di Cloudflare).
+
+Sarà trattato in una guida separata.
