@@ -90,6 +90,14 @@ services:
 
   # --- Networking ---
 
+  upsnap:
+    image: ghcr.io/seriousm4x/upsnap:latest
+    container_name: upsnap
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ./upsnap/data:/app/db
+
   traefik:
     image: traefik:v3.0
     container_name: traefik

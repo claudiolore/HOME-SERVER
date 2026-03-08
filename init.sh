@@ -32,6 +32,9 @@ mkdir -p homepage/config
 # Sicurezza
 mkdir -p vaultwarden/data
 
+# Networking
+mkdir -p upsnap/data
+
 echo "Impostazione permessi..."
 
 # Prometheus - UID 65534 (nobody)
@@ -54,6 +57,9 @@ chown -R 999:999 mysql/data
 
 # Redis - UID 999
 chown -R 999:999 redis/data
+
+# Upsnap - UID 1000
+chown -R 1000:1000 upsnap/data
 
 echo "Permessi impostati correttamente!"
 echo ""

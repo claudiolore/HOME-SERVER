@@ -26,6 +26,7 @@ Sostituisci `RASPBERRY_IP` con l'IP del tuo Raspberry Pi (es. `192.168.1.100`).
 | **Uptime Kuma** | Crea account al primo accesso |
 | **Open WebUI** | Registra un account al primo accesso |
 | **Vaultwarden** | Crea account dal client Bitwarden o dall'interfaccia web |
+| **Upsnap** | Crea account al primo accesso |
 
 ### Servizi senza autenticazione
 
@@ -97,6 +98,7 @@ docker ps -a --filter "status=restarting"
 | **Traefik** | `http://RASPBERRY_IP:8082` | Nessuna | Dashboard accessibile direttamente |
 | **Vaultwarden** | `http://RASPBERRY_IP:8222` | Crea account | Registra dal client Bitwarden |
 | **Vaultwarden Admin** | `http://RASPBERRY_IP:8222/admin` | Da .env | `VAULTWARDEN_ADMIN_TOKEN` |
+| **Upsnap** | `http://RASPBERRY_IP:8090` | Crea account | Scegli username/password al primo accesso |
 
 ---
 
@@ -251,6 +253,24 @@ Dopo l'installazione, in Impostazioni → Amministrazione:
 
 ## 7. Test Networking
 
+### Upsnap
+
+```bash
+# Verifica che Upsnap risponda
+curl -s -o /dev/null -w "%{http_code}" http://RASPBERRY_IP:8090
+# Deve rispondere: 200
+```
+
+**Setup:**
+1. Vai su `http://RASPBERRY_IP:8090`
+2. Crea un account amministratore
+3. Aggiungi dispositivi con Nome, MAC Address e IP (opzionale per ping)
+4. Testa il Wake-on-LAN cliccando sul pulsante di accensione
+
+**Nota:** Upsnap usa `network_mode: host` per poter inviare i magic packets WoL sulla rete locale.
+
+---
+
 ### Traefik
 
 ```bash
@@ -335,6 +355,7 @@ Oppure sistema manualmente i permessi per il servizio specifico:
 | Qdrant | 1000 | `sudo chown -R 1000:1000 qdrant/data` |
 | Uptime Kuma | 1000 | `sudo chown -R 1000:1000 uptime-kuma/data` |
 | Redis | 999 | `sudo chown -R 999:999 redis/data` |
+| Upsnap | 1000 | `sudo chown -R 1000:1000 upsnap/data` |
 
 ### Servizio non risponde
 

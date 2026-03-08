@@ -125,6 +125,20 @@ UI web per controllare Docker: start/stop/restart container, vedere volumi, reti
 
 ## Networking
 
+### Upsnap
+
+- **Container:** `upsnap`
+- **Porta:** `8090`
+- **Immagine:** `ghcr.io/seriousm4x/upsnap:latest`
+- **Dati:** `./upsnap/data`
+- **Network:** `host` (necessario per Wake-on-LAN)
+
+Applicazione web per Wake-on-LAN. Permette di accendere dispositivi sulla rete locale inviando magic packets. Supporta ping per verificare lo stato dei dispositivi, scheduling per accensioni programmate e gruppi di dispositivi.
+
+**Domanda a cui risponde:** *"Voglio accendere i miei PC e dispositivi da remoto con un click."*
+
+---
+
 ### Traefik
 
 - **Container:** `traefik`
