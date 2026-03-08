@@ -59,6 +59,10 @@
         href: http://100.114.47.75:8082
         description: Reverse Proxy
         icon: traefik
+    - Upsnap:
+        href: http://100.114.47.75:8090
+        description: Wake-on-LAN
+        icon: upsnap
 
 - Sicurezza:
     - Vaultwarden:
