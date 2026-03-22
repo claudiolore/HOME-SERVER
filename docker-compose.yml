@@ -207,6 +207,7 @@ services:
     restart: unless-stopped
     environment:
       HOMEPAGE_ALLOWED_HOSTS: "*"
+      HOMEPAGE_VAR_SERVER_IP: ${SERVER_IP}
     volumes:
       - ./homepage/config:/app/config
       - /var/run/docker.sock:/var/run/docker.sock:ro
