@@ -69,3 +69,17 @@
         href: http://{{HOMEPAGE_VAR_SERVER_IP}}:8222
         description: Password Manager
         icon: vaultwarden
+
+- Produttività:
+    - n8n:
+        href: http://{{HOMEPAGE_VAR_SERVER_IP}}:5678
+        description: Workflow Automation
+        icon: n8n
+    - Vikunja:
+        href: http://{{HOMEPAGE_VAR_SERVER_IP}}:3456
+        description: Task Management
+        icon: vikunja
+    - Homarr:
+        href: http://{{HOMEPAGE_VAR_SERVER_IP}}:7575
+        description: Dashboard
+        icon: homarr

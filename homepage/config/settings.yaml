@@ -32,3 +32,6 @@ layout:
   Sicurezza:
     style: row
     columns: 2
+  Produttività:
+    style: row
+    columns: 3

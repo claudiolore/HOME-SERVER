@@ -35,6 +35,11 @@ mkdir -p vaultwarden/data
 # Networking
 mkdir -p upsnap/data
 
+# Produttività
+mkdir -p n8n/data
+mkdir -p vikunja/data
+mkdir -p homarr/configs homarr/icons homarr/data
+
 echo "Impostazione permessi..."
 
 # Prometheus - UID 65534 (nobody)
@@ -60,6 +65,12 @@ chown -R 999:999 redis/data
 
 # Upsnap - UID 1000
 chown -R 1000:1000 upsnap/data
+
+# N8n - UID 1000 (node user)
+chown -R 1000:1000 n8n/data
+
+# Vikunja - UID 1000
+chown -R 1000:1000 vikunja/data
 
 echo "Permessi impostati correttamente!"
 echo ""

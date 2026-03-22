@@ -216,6 +216,51 @@ services:
     networks:
       - internal
 
+  # --- Produttività ---
+
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n
+    restart: unless-stopped
+    environment:
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}
+      N8N_SECURE_COOKIE: "false"
+    volumes:
+      - ./n8n/data:/home/node/.n8n
+    ports:
+      - "5678:5678"
+    networks:
+      - internal
+
+  vikunja:
+    image: vikunja/vikunja:latest
+    container_name: vikunja
+    restart: unless-stopped
+    environment:
+      VIKUNJA_SERVICE_JWTSECRET: ${VIKUNJA_JWT_SECRET}
+      VIKUNJA_DATABASE_TYPE: sqlite
+      VIKUNJA_DATABASE_PATH: /app/vikunja/files/vikunja.db
+    volumes:
+      - ./vikunja/data:/app/vikunja/files
+    ports:
+      - "3456:3456"
+    networks:
+      - internal
+
+  homarr:
+    image: ghcr.io/ajnart/homarr:latest
+    container_name: homarr
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./homarr/configs:/app/data/configs
+      - ./homarr/icons:/app/public/icons
+      - ./homarr/data:/data
+    ports:
+      - "7575:7575"
+    networks:
+      - internal
+
   # --- AI ---
 
   open-webui:
