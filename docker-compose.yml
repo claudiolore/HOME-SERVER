@@ -238,6 +238,7 @@ services:
     restart: unless-stopped
     environment:
       VIKUNJA_SERVICE_JWTSECRET: ${VIKUNJA_JWT_SECRET}
+      VIKUNJA_SERVICE_PUBLICURL: http://${SERVER_IP}:3456
       VIKUNJA_DATABASE_TYPE: sqlite
       VIKUNJA_DATABASE_PATH: /app/vikunja/files/vikunja.db
     volumes:
