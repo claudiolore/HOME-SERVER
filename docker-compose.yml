@@ -20,13 +20,28 @@ services:
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${NEXTCLOUD_MYSQL_DATABASE}
-      MYSQL_USER: ${NEXTCLOUD_MYSQL_USER}
-      MYSQL_PASSWORD: ${NEXTCLOUD_MYSQL_PASSWORD}
     volumes:
       - ./mysql/data:/var/lib/mysql
     ports:
       - "3306:3306"
+    networks:
+      - internal
+
+  postgres-apps:
+    image: pgvector/pgvector:pg16
+    container_name: postgres-apps
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_APPS_PASSWORD}
+      NEXTCLOUD_DB_USER: ${NEXTCLOUD_DB_USER}
+      NEXTCLOUD_DB_PASSWORD: ${NEXTCLOUD_DB_PASSWORD}
+      IMMICH_DB_USER: ${IMMICH_DB_USER}
+      IMMICH_DB_PASSWORD: ${IMMICH_DB_PASSWORD}
+    volumes:
+      - ./postgres-apps/data:/var/lib/postgresql/data
+      - ./postgres-apps/init:/docker-entrypoint-initdb.d
+    ports:
+      - "5433:5432"
     networks:
       - internal
 
@@ -65,14 +80,14 @@ services:
     environment:
       NEXTCLOUD_ADMIN_USER: ${NEXTCLOUD_ADMIN_USER}
       NEXTCLOUD_ADMIN_PASSWORD: ${NEXTCLOUD_ADMIN_PASSWORD}
-      NEXTCLOUD_DB_HOST: mysql
-      NEXTCLOUD_DB_NAME: ${NEXTCLOUD_MYSQL_DATABASE}
-      NEXTCLOUD_DB_USER: ${NEXTCLOUD_MYSQL_USER}
-      NEXTCLOUD_DB_PASSWORD: ${NEXTCLOUD_MYSQL_PASSWORD}
+      POSTGRES_HOST: postgres-apps
+      POSTGRES_DB: nextcloud
+      POSTGRES_USER: ${NEXTCLOUD_DB_USER}
+      POSTGRES_PASSWORD: ${NEXTCLOUD_DB_PASSWORD}
       REDIS_HOST: redis
       REDIS_HOST_PASSWORD: ${REDIS_PASSWORD}
     depends_on:
-      - mysql
+      - postgres-apps
       - redis
     networks:
       - internal
@@ -200,6 +215,39 @@ services:
       - internal
 
   # --- Media / Utilità ---
+
+  immich-server:
+    image: ghcr.io/immich-app/immich-server:release
+    container_name: immich-server
+    restart: unless-stopped
+    environment:
+      DB_HOSTNAME: postgres-apps
+      DB_USERNAME: ${IMMICH_DB_USER}
+      DB_PASSWORD: ${IMMICH_DB_PASSWORD}
+      DB_DATABASE_NAME: immich
+      REDIS_HOSTNAME: redis
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      UPLOAD_LOCATION: /usr/src/app/upload
+      IMMICH_MACHINE_LEARNING_URL: http://immich-machine-learning:3003
+    volumes:
+      - ./immich/upload:/usr/src/app/upload
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "2283:2283"
+    depends_on:
+      - postgres-apps
+      - redis
+    networks:
+      - internal
+
+  immich-machine-learning:
+    image: ghcr.io/immich-app/immich-machine-learning:release
+    container_name: immich-machine-learning
+    restart: unless-stopped
+    volumes:
+      - ./immich/ml-cache:/cache
+    networks:
+      - internal
 
   homepage:
     image: ghcr.io/gethomepage/homepage:latest
