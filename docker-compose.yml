@@ -85,7 +85,7 @@ services:
     environment:
       NEXTCLOUD_ADMIN_USER: ${NEXTCLOUD_ADMIN_USER}
       NEXTCLOUD_ADMIN_PASSWORD: ${NEXTCLOUD_ADMIN_PASSWORD}
-      NEXTCLOUD_TRUSTED_DOMAINS: ${SERVER_IP}
+      NEXTCLOUD_TRUSTED_DOMAINS: ${SERVER_IP} nextcloud.${SERVER_IP}.nip.io
       POSTGRES_HOST: postgres-apps
       POSTGRES_DB: nextcloud
       POSTGRES_USER: ${NEXTCLOUD_DB_USER}
@@ -99,6 +99,11 @@ services:
         condition: service_started
     networks:
       - internal
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.nextcloud.rule=Host(`nextcloud.${SERVER_IP}.nip.io`)"
+      - "traefik.http.routers.nextcloud.entrypoints=web"
+      - "traefik.http.services.nextcloud.loadbalancer.server.port=80"
 
   ollama:
     image: ollama/ollama:latest
@@ -140,6 +145,11 @@ services:
       - "8082:8080"
     networks:
       - internal
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik-dashboard.rule=Host(`traefik.${SERVER_IP}.nip.io`)"
+      - "traefik.http.routers.traefik-dashboard.entrypoints=web"
+      - "traefik.http.routers.traefik-dashboard.service=api@internal"
 
   # --- Sicurezza ---
 
@@ -155,6 +165,11 @@ services:
       - "8222:80"
     networks:
       - internal
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.vaultwarden.rule=Host(`vault.${SERVER_IP}.nip.io`)"
+      - "traefik.http.routers.vaultwarden.entrypoints=web"
+      - "traefik.http.services.vaultwarden.loadbalancer.server.port=80"
 
   # --- Gestione Container ---
 
@@ -169,6 +184,11 @@ services:
       - "9000:9000"
     networks:
       - internal
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.portainer.rule=Host(`portainer.${SERVER_IP}.nip.io`)"
+      - "traefik.http.routers.portainer.entrypoints=web"
+      - "traefik.http.services.portainer.loadbalancer.server.port=9000"
 
   # --- Monitoring ---
 
@@ -182,6 +202,11 @@ services:
       - "3001:3001"
     networks:
       - internal
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.uptime-kuma.rule=Host(`uptime.${SERVER_IP}.nip.io`)"
+      - "traefik.http.routers.uptime-kuma.entrypoints=web"
+      - "traefik.http.services.uptime-kuma.loadbalancer.server.port=3001"
 
   prometheus:
     image: prom/prometheus:latest
@@ -194,6 +219,11 @@ services:
       - "9090:9090"
     networks:
       - internal
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.prometheus.rule=Host(`prometheus.${SERVER_IP}.nip.io`)"
+      - "traefik.http.routers.prometheus.entrypoints=web"
+      - "traefik.http.services.prometheus.loadbalancer.server.port=9090"
 
   grafana:
     image: grafana/grafana:latest
@@ -210,6 +240,11 @@ services:
       - prometheus
     networks:
       - internal
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.grafana.rule=Host(`grafana.${SERVER_IP}.nip.io`)"
+      - "traefik.http.routers.grafana.entrypoints=web"
+      - "traefik.http.services.grafana.loadbalancer.server.port=3000"
 
   dozzle:
     image: amir20/dozzle:latest
@@ -221,6 +256,11 @@ services:
       - "8888:8080"
     networks:
       - internal
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dozzle.rule=Host(`dozzle.${SERVER_IP}.nip.io`)"
+      - "traefik.http.routers.dozzle.entrypoints=web"
+      - "traefik.http.services.dozzle.loadbalancer.server.port=8080"
 
   # --- Media / Utilità ---
 
@@ -249,6 +289,11 @@ services:
         condition: service_started
     networks:
       - internal
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.immich.rule=Host(`immich.${SERVER_IP}.nip.io`)"
+      - "traefik.http.routers.immich.entrypoints=web"
+      - "traefik.http.services.immich.loadbalancer.server.port=2283"
 
   immich-machine-learning:
     image: ghcr.io/immich-app/immich-machine-learning:release
@@ -273,6 +318,11 @@ services:
       - "3002:3000"
     networks:
       - internal
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.homepage.rule=Host(`home.${SERVER_IP}.nip.io`)"
+      - "traefik.http.routers.homepage.entrypoints=web"
+      - "traefik.http.services.homepage.loadbalancer.server.port=3000"
 
   # --- Produttività ---
 
@@ -289,6 +339,11 @@ services:
       - "5678:5678"
     networks:
       - internal
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.n8n.rule=Host(`n8n.${SERVER_IP}.nip.io`)"
+      - "traefik.http.routers.n8n.entrypoints=web"
+      - "traefik.http.services.n8n.loadbalancer.server.port=5678"
 
   vikunja:
     image: vikunja/vikunja:latest
@@ -296,7 +351,7 @@ services:
     restart: unless-stopped
     environment:
       VIKUNJA_SERVICE_JWTSECRET: ${VIKUNJA_JWT_SECRET}
-      VIKUNJA_SERVICE_PUBLICURL: http://${SERVER_IP}:3456
+      VIKUNJA_SERVICE_PUBLICURL: http://vikunja.${SERVER_IP}.nip.io
       VIKUNJA_DATABASE_TYPE: sqlite
       VIKUNJA_DATABASE_PATH: /app/vikunja/files/vikunja.db
     volumes:
@@ -305,6 +360,11 @@ services:
       - "3456:3456"
     networks:
       - internal
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.vikunja.rule=Host(`vikunja.${SERVER_IP}.nip.io`)"
+      - "traefik.http.routers.vikunja.entrypoints=web"
+      - "traefik.http.services.vikunja.loadbalancer.server.port=3456"
 
   # --- AI ---
 
@@ -322,6 +382,11 @@ services:
       - ollama
     networks:
       - internal
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.open-webui.rule=Host(`webui.${SERVER_IP}.nip.io`)"
+      - "traefik.http.routers.open-webui.entrypoints=web"
+      - "traefik.http.services.open-webui.loadbalancer.server.port=8080"
 
 networks:
   internal:
