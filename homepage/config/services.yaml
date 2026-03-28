@@ -38,10 +38,13 @@
         icon: dozzle
 
 - Database:
-    - PostgreSQL:
+    - PostgreSQL (Dev):
         description: Port 5432
         icon: postgres
-    - MySQL:
+    - PostgreSQL (Apps):
+        description: Port 5433 — Nextcloud + Immich
+        icon: postgres
+    - MySQL (Dev):
         description: Port 3306
         icon: mysql
     - Redis:
@@ -53,6 +56,10 @@
         href: http://{{HOMEPAGE_VAR_SERVER_IP}}:8080
         description: Personal Cloud
         icon: nextcloud
+    - Immich:
+        href: http://{{HOMEPAGE_VAR_SERVER_IP}}:2283
+        description: Photo Management
+        icon: immich
 
 - Networking:
     - Traefik:
