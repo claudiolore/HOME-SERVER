@@ -8,6 +8,8 @@ echo "Creazione cartelle..."
 
 # Database (gestiscono i permessi da soli, ma creiamo le cartelle)
 mkdir -p postgres/data
+mkdir -p postgres-apps/data
+mkdir -p postgres-apps/init
 mkdir -p mysql/data
 mkdir -p redis/data
 
@@ -18,6 +20,8 @@ mkdir -p open-webui/data
 
 # Cloud
 mkdir -p nextcloud/data
+mkdir -p immich/upload
+mkdir -p immich/ml-cache
 
 # Monitoring
 mkdir -p prometheus/config
@@ -59,6 +63,10 @@ chown -R 1000:1000 uptime-kuma/data
 
 # MySQL - UID 999
 chown -R 999:999 mysql/data
+
+# Immich - UID 1000
+chown -R 1000:1000 immich/upload
+chown -R 1000:1000 immich/ml-cache
 
 # Redis - UID 999
 chown -R 999:999 redis/data
