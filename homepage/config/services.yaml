@@ -54,10 +54,6 @@
         href: http://{{HOMEPAGE_VAR_SERVER_IP}}:8888
         description: Container Logs
         icon: dozzle
-    - Homarr:
-        href: http://{{HOMEPAGE_VAR_SERVER_IP}}:7575
-        description: Dashboard
-        icon: homarr
 
 - Networking:
     - Traefik:

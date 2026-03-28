@@ -313,21 +313,6 @@ Gestione task e progetti self-hosted, alternativa a Todoist/Trello. Supporta lis
 
 ---
 
-### Homarr
-
-- **Container:** `homarr`
-- **Porta:** `7575`
-- **Immagine:** `ghcr.io/ajnart/homarr:latest`
-- **Dati:** `./homarr`
-
-Dashboard alternativa per l'home server con integrazione nativa di molti servizi self-hosted. Widget, drag & drop, supporto Docker.
-
-> **Nota:** l'immagine include un healthcheck built-in che risulta sempre in stato `unhealthy` pur funzionando correttamente. È disabilitato nel compose con `healthcheck: disable: true`.
-
-**Domanda a cui risponde:** *"Voglio una dashboard più ricca di widget per il mio server."*
-
----
-
 ## Rete
 
 Tutti i servizi comunicano attraverso una rete Docker interna (`internal`, driver bridge). Le porte sono esposte direttamente sull'host. Traefik è presente come reverse proxy in modalità base, pronto per essere configurato come punto di ingresso unico in futuro. L'accesso remoto avviene tramite Tailscale installato nativamente sull'host.
