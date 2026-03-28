@@ -12,9 +12,9 @@ Sostituisci `RASPBERRY_IP` con l'IP del tuo Raspberry Pi (es. `192.168.1.100`).
 |----------|----------|----------|
 | **Nextcloud** | `NEXTCLOUD_ADMIN_USER` | `NEXTCLOUD_ADMIN_PASSWORD` |
 | **Grafana** | `GRAFANA_ADMIN_USER` | `GRAFANA_ADMIN_PASSWORD` |
-| **PostgreSQL** | `POSTGRES_USER` | `POSTGRES_PASSWORD` |
+| **PostgreSQL Dev** | `POSTGRES_USER` | `POSTGRES_PASSWORD` |
+| **PostgreSQL Apps** | `postgres` | `POSTGRES_APPS_PASSWORD` |
 | **MySQL (root)** | `root` | `MYSQL_ROOT_PASSWORD` |
-| **MySQL (app)** | `MYSQL_USER` | `MYSQL_PASSWORD` |
 | **Redis** | - | `REDIS_PASSWORD` |
 | **Vaultwarden** | - | `VAULTWARDEN_ADMIN_TOKEN` (per `/admin`) |
 
@@ -27,6 +27,7 @@ Sostituisci `RASPBERRY_IP` con l'IP del tuo Raspberry Pi (es. `192.168.1.100`).
 | **Open WebUI** | Registra un account al primo accesso |
 | **Vaultwarden** | Crea account dal client Bitwarden o dall'interfaccia web |
 | **Upsnap** | Crea account al primo accesso |
+| **Immich** | Registra un account al primo accesso |
 
 ### Servizi senza autenticazione
 
@@ -90,6 +91,7 @@ docker ps -a --filter "status=restarting"
 | **Portainer** | `http://RASPBERRY_IP:9000` | Crea account | Scegli username/password al primo accesso |
 | **Homepage** | `http://RASPBERRY_IP:3002` | Nessuna | Accesso diretto |
 | **Nextcloud** | `http://RASPBERRY_IP:8080` | Da .env | `NEXTCLOUD_ADMIN_USER` / `NEXTCLOUD_ADMIN_PASSWORD` |
+| **Immich** | `http://RASPBERRY_IP:2283` | Crea account | Registra al primo accesso |
 | **Grafana** | `http://RASPBERRY_IP:3000` | Da .env | `GRAFANA_ADMIN_USER` / `GRAFANA_ADMIN_PASSWORD` |
 | **Prometheus** | `http://RASPBERRY_IP:9090` | Nessuna | Accesso diretto |
 | **Uptime Kuma** | `http://RASPBERRY_IP:3001` | Crea account | Scegli username/password al primo accesso |
@@ -108,16 +110,33 @@ docker ps -a --filter "status=restarting"
 
 | Database | Variabile User | Variabile Password |
 |----------|----------------|-------------------|
-| PostgreSQL | `POSTGRES_USER` | `POSTGRES_PASSWORD` |
+| PostgreSQL Dev (5432) | `POSTGRES_USER` | `POSTGRES_PASSWORD` |
+| PostgreSQL Apps (5433) — superuser | `postgres` | `POSTGRES_APPS_PASSWORD` |
+| PostgreSQL Apps — Nextcloud | `NEXTCLOUD_DB_USER` | `NEXTCLOUD_DB_PASSWORD` |
+| PostgreSQL Apps — Immich | `IMMICH_DB_USER` | `IMMICH_DB_PASSWORD` |
 | MySQL (root) | root | `MYSQL_ROOT_PASSWORD` |
-| MySQL (app) | `MYSQL_USER` | `MYSQL_PASSWORD` |
 | Redis | - | `REDIS_PASSWORD` |
 
-### PostgreSQL
+### PostgreSQL Dev
 
 ```bash
-# Sostituisci 'devuser' con il valore di POSTGRES_USER dal .env
+# Connessione con l'utente dev
 docker exec -it postgres psql -U devuser -c "SELECT version();"
+```
+
+### PostgreSQL Apps
+
+```bash
+# Connessione come superuser
+docker exec -it postgres-apps psql -U postgres -c "\l"
+# Deve mostrare i database: nextcloud, immich, postgres
+
+# Verifica utenti
+docker exec -it postgres-apps psql -U postgres -c "\du"
+
+# Verifica estensione pgvector su immich
+docker exec -it postgres-apps psql -U postgres -d immich -c "\dx"
+# Deve mostrare l'estensione "vector"
 ```
 
 ### MySQL
@@ -125,9 +144,6 @@ docker exec -it postgres psql -U devuser -c "SELECT version();"
 ```bash
 # Come root (usa MYSQL_ROOT_PASSWORD)
 docker exec -it mysql mysql -u root -p -e "SHOW DATABASES;"
-
-# Come utente app (usa MYSQL_USER e MYSQL_PASSWORD)
-docker exec -it mysql mysql -u nextcloud_user -p -e "SHOW DATABASES;"
 ```
 
 ### Redis
@@ -207,31 +223,13 @@ curl -s http://RASPBERRY_IP:9090/api/v1/targets | grep -o '"health":"[^"]*"'
 
 ## 6. Test Nextcloud (Setup Completo)
 
-Al primo accesso su `http://RASPBERRY_IP:8080`:
+Nextcloud è configurato per usare PostgreSQL (`postgres-apps`) e Redis. Al primo avvio il database viene inizializzato automaticamente tramite le variabili d'ambiente — non è necessario scegliere il database manualmente.
 
-### Configurazione Iniziale
+### Primo accesso
 
-1. **Crea account amministratore**:
-   - Username: scegli un nome (es. `admin`)
-   - Password: scegli una password sicura
-
-2. **Data folder**: lascia il valore di default `/var/www/html/data`
-
-3. **Database - IMPORTANTE: Seleziona MySQL/MariaDB** (NON SQLite!):
-   - Clicca su **MySQL/MariaDB**
-   - **Database user**: valore di `NEXTCLOUD_MYSQL_USER` dal `.env`
-   - **Database password**: valore di `NEXTCLOUD_MYSQL_PASSWORD` dal `.env`
-   - **Database name**: valore di `NEXTCLOUD_MYSQL_DATABASE` dal `.env`
-   - **Database host**: `mysql`
-
-4. Clicca **Install**
-
-### Verifica credenziali database
-
-```bash
-# Visualizza le credenziali MySQL per Nextcloud
-cat .env | grep NEXTCLOUD_MYSQL
-```
+1. Vai su `http://RASPBERRY_IP:8080`
+2. Inserisci le credenziali admin dal `.env` (`NEXTCLOUD_ADMIN_USER` / `NEXTCLOUD_ADMIN_PASSWORD`)
+3. Nextcloud si configura automaticamente con PostgreSQL e Redis
 
 ### Errore "Can't write into config directory"
 
@@ -242,16 +240,27 @@ sudo chown -R 33:33 nextcloud/data
 docker compose restart nextcloud
 ```
 
-### Configura Redis (opzionale, migliora le performance)
+---
 
-Dopo l'installazione, in Impostazioni → Amministrazione:
-- Host: `redis`
-- Porta: `6379`
-- Password: valore di `REDIS_PASSWORD` dal `.env`
+## 7. Test Immich
+
+### Primo accesso
+
+1. Vai su `http://RASPBERRY_IP:2283`
+2. Registra l'account amministratore
+3. Configura le librerie e avvia il backup dalle app mobile (iOS/Android)
+
+### Verifica database e pgvector
+
+```bash
+# Verifica che il database immich sia raggiungibile
+docker exec -it postgres-apps psql -U postgres -d immich -c "SELECT COUNT(*) FROM pg_extension WHERE extname='vector';"
+# Deve restituire 1
+```
 
 ---
 
-## 7. Test Networking
+## 8. Test Networking
 
 ### Upsnap
 
@@ -287,7 +296,7 @@ curl -s http://RASPBERRY_IP:8082/api/overview
 
 ---
 
-## 8. Test Sicurezza
+## 9. Test Sicurezza
 
 ### Vaultwarden
 
@@ -315,7 +324,7 @@ curl -s -o /dev/null -w "%{http_code}" http://RASPBERRY_IP:8222/admin
 
 ---
 
-## 9. Checklist Finale
+## 10. Checklist Finale
 
 ```bash
 # Verifica memoria e CPU
@@ -326,6 +335,8 @@ df -h
 
 # Verifica log per errori
 docker logs nextcloud 2>&1 | tail -20
+docker logs immich-server 2>&1 | tail -20
+docker logs postgres-apps 2>&1 | tail -20
 docker logs grafana 2>&1 | tail -20
 docker logs open-webui 2>&1 | tail -20
 docker logs traefik 2>&1 | tail -20

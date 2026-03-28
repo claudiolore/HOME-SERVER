@@ -25,29 +25,48 @@ docker compose up -d
 
 ## Database
 
-### PostgreSQL 16
+### PostgreSQL 16 — Dev (`postgres`)
 
 - **Container:** `postgres`
 - **Porta:** `5432`
 - **Immagine:** `postgres:16`
 - **Dati:** `./postgres/data`
 
-Database relazionale avanzato, ideale per applicazioni che richiedono integrità dei dati, query complesse e supporto JSON nativo. Usato come database di riferimento per progetti che necessitano di un motore SQL completo e affidabile.
+Server PostgreSQL dedicato allo sviluppo. Completamente vuoto, da usare liberamente per progetti e applicazioni in sviluppo. Non condivide dati con i servizi dell'home server.
 
-**Domanda a cui risponde:** *"Mi serve un database relazionale robusto, con supporto a transazioni, JSON e query avanzate."*
+**Domanda a cui risponde:** *"Mi serve un PostgreSQL pulito per sviluppare la mia app."*
 
 ---
 
-### MySQL 8
+### PostgreSQL 16 + pgvector — App (`postgres-apps`)
+
+- **Container:** `postgres-apps`
+- **Porta:** `5433`
+- **Immagine:** `pgvector/pgvector:pg16`
+- **Dati:** `./postgres-apps/data`
+- **Init:** `./postgres-apps/init/`
+
+Server PostgreSQL dedicato ai servizi dell'home server (Nextcloud e Immich). All'avvio crea automaticamente utenti e database isolati per ciascun servizio. Include l'estensione `pgvector` richiesta da Immich.
+
+| Servizio | Utente | Database |
+|----------|--------|----------|
+| Nextcloud | `NEXTCLOUD_DB_USER` | `nextcloud` |
+| Immich | `IMMICH_DB_USER` | `immich` |
+
+**Domanda a cui risponde:** *"Voglio che i database dei miei servizi siano isolati da quelli di sviluppo."*
+
+---
+
+### MySQL 8 — Dev (`mysql`)
 
 - **Container:** `mysql`
 - **Porta:** `3306`
 - **Immagine:** `mysql:8`
 - **Dati:** `./mysql/data`
 
-Database relazionale ampiamente diffuso, usato in questo stack come backend per Nextcloud. Il database `nextcloud` viene creato automaticamente al primo avvio tramite la variabile `MYSQL_DATABASE`.
+Server MySQL dedicato allo sviluppo. Completamente vuoto, da usare liberamente per progetti e applicazioni in sviluppo. Non condivide dati con i servizi dell'home server.
 
-**Domanda a cui risponde:** *"Ho bisogno di un database MySQL compatibile con Nextcloud e altre app web tradizionali."*
+**Domanda a cui risponde:** *"Mi serve un MySQL pulito per sviluppare la mia app."*
 
 ---
 
@@ -58,7 +77,7 @@ Database relazionale ampiamente diffuso, usato in questo stack come backend per 
 - **Immagine:** `redis:7-alpine`
 - **Dati:** `./redis/data`
 
-Store chiave-valore in memoria, usato come cache e session store. In questo stack serve a Nextcloud per velocizzare il file locking e la gestione delle sessioni. Protetto da password.
+Store chiave-valore in memoria, usato come cache e session store. Serve a Nextcloud per velocizzare il file locking e la gestione delle sessioni. Protetto da password.
 
 **Domanda a cui risponde:** *"Mi serve una cache veloce per migliorare le performance dei miei servizi."*
 
@@ -92,6 +111,20 @@ Database vettoriale ottimizzato per la ricerca per similarità. Usato in combina
 
 ---
 
+### Open WebUI
+
+- **Container:** `open-webui`
+- **Porta:** `8081`
+- **Immagine:** `ghcr.io/open-webui/open-webui:main`
+- **Dati:** `./open-webui/data`
+- **Dipendenze:** Ollama
+
+Interfaccia web per interagire con Ollama, simile a ChatGPT ma completamente locale. Supporta conversazioni multiple, gestione modelli, upload documenti e cronologia chat. Si connette automaticamente a Ollama sulla rete interna.
+
+**Domanda a cui risponde:** *"Voglio chattare con i miei modelli AI da browser, come su ChatGPT."*
+
+---
+
 ## Cloud Personale
 
 ### Nextcloud
@@ -100,11 +133,40 @@ Database vettoriale ottimizzato per la ricerca per similarità. Usato in combina
 - **Porta:** `8080`
 - **Immagine:** `nextcloud:latest`
 - **Dati:** `./nextcloud/data`
-- **Dipendenze:** MySQL, Redis
+- **Dipendenze:** `postgres-apps`, Redis
 
-Piattaforma self-hosted per la gestione di file, calendario, contatti, note e collaborazione. Alternativa a Google Drive / Dropbox completamente sotto il proprio controllo. Utilizza MySQL come database e Redis come cache per le performance.
+Piattaforma self-hosted per la gestione di file, calendario, contatti, note e collaborazione. Alternativa a Google Drive / Dropbox completamente sotto il proprio controllo. Utilizza PostgreSQL (`postgres-apps`) come database e Redis come cache per le performance.
 
 **Domanda a cui risponde:** *"Voglio un cloud personale per sincronizzare file, calendari e contatti senza affidarmi a servizi terzi."*
+
+---
+
+## Media / Utilità
+
+### Immich
+
+- **Container:** `immich-server`, `immich-machine-learning`
+- **Porta:** `2283`
+- **Immagini:** `ghcr.io/immich-app/immich-server:release`, `ghcr.io/immich-app/immich-machine-learning:release`
+- **Dati:** `./immich/upload`, `./immich/ml-cache`
+- **Dipendenze:** `postgres-apps`, Redis
+
+Piattaforma self-hosted per la gestione e il backup di foto e video, alternativa a Google Photos. Supporta riconoscimento facciale, ricerca semantica e organizzazione automatica tramite machine learning. Usa il database `immich` su `postgres-apps` (con estensione `pgvector`).
+
+**Domanda a cui risponde:** *"Voglio fare il backup delle mie foto in locale con riconoscimento automatico."*
+
+---
+
+### Homepage
+
+- **Container:** `homepage`
+- **Porta:** `3002`
+- **Immagine:** `ghcr.io/gethomepage/homepage:latest`
+- **Config:** `./homepage/config`
+
+Dashboard personale con link a tutti i servizi del server. Mostra widget con informazioni rapide (stato servizi, meteo, ecc.). Configurazione via file YAML, integrazione Docker per discovery automatico dei container.
+
+**Domanda a cui risponde:** *"Dove trovo tutti i miei servizi in un'unica pagina?"*
 
 ---
 
@@ -221,60 +283,44 @@ Log viewer in tempo reale per tutti i container Docker. Interfaccia web leggera 
 
 ---
 
-## Media / Utilità
+## Produttività
 
-### Homepage
+### n8n
 
-- **Container:** `homepage`
-- **Porta:** `3002`
-- **Immagine:** `ghcr.io/gethomepage/homepage:latest`
-- **Config:** `./homepage/config`
+- **Container:** `n8n`
+- **Porta:** `5678`
+- **Immagine:** `n8nio/n8n:latest`
+- **Dati:** `./n8n/data`
 
-Dashboard personale con link a tutti i servizi del server. Mostra widget con informazioni rapide (stato servizi, meteo, ecc.). Configurazione via file YAML, integrazione Docker per discovery automatico dei container.
+Piattaforma di automazione workflow no-code/low-code. Permette di collegare servizi, automatizzare task ripetitivi e creare pipeline dati tramite un'interfaccia visuale a nodi.
 
-**Domanda a cui risponde:** *"Dove trovo tutti i miei servizi in un'unica pagina?"*
-
----
-
-## AI
-
-### Ollama
-
-- **Container:** `ollama`
-- **Porta:** `11434`
-- **Immagine:** `ollama/ollama:latest`
-- **Dati:** `./ollama/data`
-
-Runtime per eseguire Large Language Models (LLM) in locale. Permette di scaricare e usare modelli come Llama, Mistral, Gemma e altri direttamente sul server, senza inviare dati a servizi cloud. Espone un'API REST compatibile con il formato OpenAI.
-
-**Domanda a cui risponde:** *"Voglio eseguire modelli AI in locale, mantenendo i miei dati privati e senza costi per API."*
+**Domanda a cui risponde:** *"Voglio automatizzare task e collegare servizi senza scrivere codice."*
 
 ---
 
-### Qdrant
+### Vikunja
 
-- **Container:** `qdrant`
-- **Porte:** `6333` (HTTP/REST), `6334` (gRPC)
-- **Immagine:** `qdrant/qdrant:latest`
-- **Dati:** `./qdrant/data`
+- **Container:** `vikunja`
+- **Porta:** `3456`
+- **Immagine:** `vikunja/vikunja:latest`
+- **Dati:** `./vikunja/data`
 
-Database vettoriale ottimizzato per la ricerca per similarità. Usato in combinazione con Ollama per implementare pipeline RAG (Retrieval-Augmented Generation): si indicizzano documenti come embedding vettoriali e si recuperano i più rilevanti per arricchire il contesto dei prompt AI.
+Gestione task e progetti self-hosted, alternativa a Todoist/Trello. Supporta liste, kanban, date di scadenza e condivisione.
 
-**Domanda a cui risponde:** *"Voglio fare ricerca semantica sui miei documenti e dare memoria ai miei modelli AI."*
+**Domanda a cui risponde:** *"Voglio gestire le mie attività in modo privato senza app cloud."*
 
 ---
 
-### Open WebUI
+### Homarr
 
-- **Container:** `open-webui`
-- **Porta:** `8081`
-- **Immagine:** `ghcr.io/open-webui/open-webui:main`
-- **Dati:** `./open-webui/data`
-- **Dipendenze:** Ollama
+- **Container:** `homarr`
+- **Porta:** `7575`
+- **Immagine:** `ghcr.io/ajnart/homarr:latest`
+- **Dati:** `./homarr`
 
-Interfaccia web per interagire con Ollama, simile a ChatGPT ma completamente locale. Supporta conversazioni multiple, gestione modelli, upload documenti e cronologia chat. Si connette automaticamente a Ollama sulla rete interna.
+Dashboard alternativa per l'home server con integrazione nativa di molti servizi self-hosted. Widget, drag & drop, supporto Docker.
 
-**Domanda a cui risponde:** *"Voglio chattare con i miei modelli AI da browser, come su ChatGPT."*
+**Domanda a cui risponde:** *"Voglio una dashboard più ricca di widget per il mio server."*
 
 ---
 
@@ -290,6 +336,7 @@ Tutti i servizi comunicano attraverso una rete Docker interna (`internal`, drive
 - Prometheus richiede un file di configurazione in `./prometheus/config/prometheus.yml`
 - Tailscale è installato nativamente sull'host (non in Docker) per massima affidabilità
 - Vaultwarden richiede un admin token per il pannello di amministrazione (`/admin`)
+- `postgres-apps` crea automaticamente utenti e database per Nextcloud e Immich tramite `./postgres-apps/init/01-init.sh`
 
 -------------
 
