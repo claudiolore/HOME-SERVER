@@ -20,12 +20,12 @@ layout:
   AI:
     style: row
     columns: 3
-  Database:
-    style: row
-    columns: 5
   Monitoring:
     style: row
     columns: 6
   Networking:
     style: row
     columns: 2
+  Database:
+    style: row
+    columns: 5
