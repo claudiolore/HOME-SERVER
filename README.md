@@ -102,10 +102,12 @@ Runtime per eseguire Large Language Models (LLM) in locale. Permette di scaricar
 
 - **Container:** `qdrant`
 - **Porte:** `6333` (HTTP/REST), `6334` (gRPC)
-- **Immagine:** `qdrant/qdrant:latest`
+- **Immagine:** `y0mg/qdrant-raspberry-pi` (community build per RPi 5)
 - **Dati:** `./qdrant/data`
 
 Database vettoriale ottimizzato per la ricerca per similarità. Usato in combinazione con Ollama per implementare pipeline RAG (Retrieval-Augmented Generation): si indicizzano documenti come embedding vettoriali e si recuperano i più rilevanti per arricchire il contesto dei prompt AI.
+
+> **Nota RPi 5:** l'immagine ufficiale `qdrant/qdrant` crasha su Raspberry Pi 5 per un bug jemalloc con kernel a 16KB page size. Si usa `y0mg/qdrant-raspberry-pi` che risolve il problema.
 
 **Domanda a cui risponde:** *"Voglio fare ricerca semantica sui miei documenti e dare memoria ai miei modelli AI."*
 
@@ -319,6 +321,8 @@ Gestione task e progetti self-hosted, alternativa a Todoist/Trello. Supporta lis
 - **Dati:** `./homarr`
 
 Dashboard alternativa per l'home server con integrazione nativa di molti servizi self-hosted. Widget, drag & drop, supporto Docker.
+
+> **Nota:** l'immagine include un healthcheck built-in che risulta sempre in stato `unhealthy` pur funzionando correttamente. È disabilitato nel compose con `healthcheck: disable: true`.
 
 **Domanda a cui risponde:** *"Voglio una dashboard più ricca di widget per il mio server."*
 
