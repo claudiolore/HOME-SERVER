@@ -14,24 +14,18 @@ theme: dark
 color: slate
 
 layout:
+  Uso Quotidiano:
+    style: row
+    columns: 5
   AI:
     style: row
     columns: 3
-  Monitoring:
-    style: row
-    columns: 4
   Database:
     style: row
-    columns: 3
-  Cloud:
+    columns: 5
+  Monitoring:
     style: row
-    columns: 2
+    columns: 6
   Networking:
     style: row
     columns: 2
-  Sicurezza:
-    style: row
-    columns: 2
-  Produttività:
-    style: row
-    columns: 3

@@ -1,15 +1,51 @@
 # Services configuration
 # https://gethomepage.dev/configs/services/
 
+- Uso Quotidiano:
+    - Open WebUI:
+        href: http://{{HOMEPAGE_VAR_SERVER_IP}}:8081
+        description: Chat AI
+        icon: open-webui
+    - Nextcloud:
+        href: http://{{HOMEPAGE_VAR_SERVER_IP}}:8080
+        description: Personal Cloud
+        icon: nextcloud
+    - Immich:
+        href: http://{{HOMEPAGE_VAR_SERVER_IP}}:2283
+        description: Foto e Video
+        icon: immich
+    - Vikunja:
+        href: http://{{HOMEPAGE_VAR_SERVER_IP}}:3456
+        description: Task Management
+        icon: vikunja
+    - Vaultwarden:
+        href: http://{{HOMEPAGE_VAR_SERVER_IP}}:8222
+        description: Password Manager
+        icon: vaultwarden
+
 - AI:
     - Ollama:
         href: http://{{HOMEPAGE_VAR_SERVER_IP}}:11434
-        description: LLM Runtime
+        description: LLM Provider (server)
         icon: ollama
-    - Open WebUI:
-        href: http://{{HOMEPAGE_VAR_SERVER_IP}}:8081
-        description: Chat Interface
-        icon: open-webui
+    - n8n:
+        href: http://{{HOMEPAGE_VAR_SERVER_IP}}:5678
+        description: Workflow Automation
+        icon: n8n
+
+- Database:
+    - PostgreSQL (Dev):
+        description: Port 5432
+        icon: postgres
+    - PostgreSQL (Apps):
+        description: Port 5433 — Nextcloud + Immich
+        icon: postgres
+    - MySQL (Dev):
+        description: Port 3306
+        icon: mysql
+    - Redis:
+        description: Port 6379
+        icon: redis
     - Qdrant:
         href: http://{{HOMEPAGE_VAR_SERVER_IP}}:6333/dashboard
         description: Vector Database
@@ -36,30 +72,10 @@
         href: http://{{HOMEPAGE_VAR_SERVER_IP}}:8888
         description: Container Logs
         icon: dozzle
-
-- Database:
-    - PostgreSQL (Dev):
-        description: Port 5432
-        icon: postgres
-    - PostgreSQL (Apps):
-        description: Port 5433 — Nextcloud + Immich
-        icon: postgres
-    - MySQL (Dev):
-        description: Port 3306
-        icon: mysql
-    - Redis:
-        description: Port 6379
-        icon: redis
-
-- Cloud:
-    - Nextcloud:
-        href: http://{{HOMEPAGE_VAR_SERVER_IP}}:8080
-        description: Personal Cloud
-        icon: nextcloud
-    - Immich:
-        href: http://{{HOMEPAGE_VAR_SERVER_IP}}:2283
-        description: Photo Management
-        icon: immich
+    - Homarr:
+        href: http://{{HOMEPAGE_VAR_SERVER_IP}}:7575
+        description: Dashboard
+        icon: homarr
 
 - Networking:
     - Traefik:
@@ -70,23 +86,3 @@
         href: http://{{HOMEPAGE_VAR_SERVER_IP}}:8090
         description: Wake-on-LAN
         icon: upsnap
-
-- Sicurezza:
-    - Vaultwarden:
-        href: http://{{HOMEPAGE_VAR_SERVER_IP}}:8222
-        description: Password Manager
-        icon: vaultwarden
-
-- Produttività:
-    - n8n:
-        href: http://{{HOMEPAGE_VAR_SERVER_IP}}:5678
-        description: Workflow Automation
-        icon: n8n
-    - Vikunja:
-        href: http://{{HOMEPAGE_VAR_SERVER_IP}}:3456
-        description: Task Management
-        icon: vikunja
-    - Homarr:
-        href: http://{{HOMEPAGE_VAR_SERVER_IP}}:7575
-        description: Dashboard
-        icon: homarr
