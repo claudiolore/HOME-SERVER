@@ -85,7 +85,7 @@ services:
     environment:
       NEXTCLOUD_ADMIN_USER: ${NEXTCLOUD_ADMIN_USER}
       NEXTCLOUD_ADMIN_PASSWORD: ${NEXTCLOUD_ADMIN_PASSWORD}
-      NEXTCLOUD_TRUSTED_DOMAINS: ${SERVER_IP} nextcloud.${SERVER_IP}.nip.io
+      NEXTCLOUD_TRUSTED_DOMAINS: ${SERVER_IP} nextcloud.home
       POSTGRES_HOST: postgres-apps
       POSTGRES_DB: nextcloud
       POSTGRES_USER: ${NEXTCLOUD_DB_USER}
@@ -101,7 +101,7 @@ services:
       - internal
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.nextcloud.rule=Host(`nextcloud.${SERVER_IP}.nip.io`)"
+      - "traefik.http.routers.nextcloud.rule=Host(`nextcloud.home`)"
       - "traefik.http.routers.nextcloud.entrypoints=web"
       - "traefik.http.services.nextcloud.loadbalancer.server.port=80"
 
@@ -147,9 +147,30 @@ services:
       - internal
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.traefik-dashboard.rule=Host(`traefik.${SERVER_IP}.nip.io`)"
+      - "traefik.http.routers.traefik-dashboard.rule=Host(`traefik.home`)"
       - "traefik.http.routers.traefik-dashboard.entrypoints=web"
       - "traefik.http.routers.traefik-dashboard.service=api@internal"
+
+  # --- DNS ---
+
+  adguardhome:
+    image: adguard/adguardhome:latest
+    container_name: adguardhome
+    restart: unless-stopped
+    volumes:
+      - ./adguardhome/work:/opt/adguardhome/work
+      - ./adguardhome/conf:/opt/adguardhome/conf
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+      - "3053:3000/tcp"  # Wizard di setup iniziale
+    networks:
+      - internal
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.adguard.rule=Host(`adguard.home`)"
+      - "traefik.http.routers.adguard.entrypoints=web"
+      - "traefik.http.services.adguard.loadbalancer.server.port=3000"
 
   # --- Sicurezza ---
 
@@ -167,7 +188,7 @@ services:
       - internal
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.vaultwarden.rule=Host(`vault.${SERVER_IP}.nip.io`)"
+      - "traefik.http.routers.vaultwarden.rule=Host(`vault.home`)"
       - "traefik.http.routers.vaultwarden.entrypoints=web"
       - "traefik.http.services.vaultwarden.loadbalancer.server.port=80"
 
@@ -186,7 +207,7 @@ services:
       - internal
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.portainer.rule=Host(`portainer.${SERVER_IP}.nip.io`)"
+      - "traefik.http.routers.portainer.rule=Host(`portainer.home`)"
       - "traefik.http.routers.portainer.entrypoints=web"
       - "traefik.http.services.portainer.loadbalancer.server.port=9000"
 
@@ -204,7 +225,7 @@ services:
       - internal
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.uptime-kuma.rule=Host(`uptime.${SERVER_IP}.nip.io`)"
+      - "traefik.http.routers.uptime-kuma.rule=Host(`uptime.home`)"
       - "traefik.http.routers.uptime-kuma.entrypoints=web"
       - "traefik.http.services.uptime-kuma.loadbalancer.server.port=3001"
 
@@ -221,7 +242,7 @@ services:
       - internal
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.prometheus.rule=Host(`prometheus.${SERVER_IP}.nip.io`)"
+      - "traefik.http.routers.prometheus.rule=Host(`prometheus.home`)"
       - "traefik.http.routers.prometheus.entrypoints=web"
       - "traefik.http.services.prometheus.loadbalancer.server.port=9090"
 
@@ -242,7 +263,7 @@ services:
       - internal
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.grafana.rule=Host(`grafana.${SERVER_IP}.nip.io`)"
+      - "traefik.http.routers.grafana.rule=Host(`grafana.home`)"
       - "traefik.http.routers.grafana.entrypoints=web"
       - "traefik.http.services.grafana.loadbalancer.server.port=3000"
 
@@ -258,7 +279,7 @@ services:
       - internal
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.dozzle.rule=Host(`dozzle.${SERVER_IP}.nip.io`)"
+      - "traefik.http.routers.dozzle.rule=Host(`dozzle.home`)"
       - "traefik.http.routers.dozzle.entrypoints=web"
       - "traefik.http.services.dozzle.loadbalancer.server.port=8080"
 
@@ -291,7 +312,7 @@ services:
       - internal
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.immich.rule=Host(`immich.${SERVER_IP}.nip.io`)"
+      - "traefik.http.routers.immich.rule=Host(`immich.home`)"
       - "traefik.http.routers.immich.entrypoints=web"
       - "traefik.http.services.immich.loadbalancer.server.port=2283"
 
@@ -320,7 +341,7 @@ services:
       - internal
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.homepage.rule=Host(`home.${SERVER_IP}.nip.io`)"
+      - "traefik.http.routers.homepage.rule=Host(`start.home`)"
       - "traefik.http.routers.homepage.entrypoints=web"
       - "traefik.http.services.homepage.loadbalancer.server.port=3000"
 
@@ -341,7 +362,7 @@ services:
       - internal
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.n8n.rule=Host(`n8n.${SERVER_IP}.nip.io`)"
+      - "traefik.http.routers.n8n.rule=Host(`n8n.home`)"
       - "traefik.http.routers.n8n.entrypoints=web"
       - "traefik.http.services.n8n.loadbalancer.server.port=5678"
 
@@ -351,7 +372,7 @@ services:
     restart: unless-stopped
     environment:
       VIKUNJA_SERVICE_JWTSECRET: ${VIKUNJA_JWT_SECRET}
-      VIKUNJA_SERVICE_PUBLICURL: http://vikunja.${SERVER_IP}.nip.io
+      VIKUNJA_SERVICE_PUBLICURL: http://vikunja.home
       VIKUNJA_DATABASE_TYPE: sqlite
       VIKUNJA_DATABASE_PATH: /app/vikunja/files/vikunja.db
     volumes:
@@ -362,7 +383,7 @@ services:
       - internal
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.vikunja.rule=Host(`vikunja.${SERVER_IP}.nip.io`)"
+      - "traefik.http.routers.vikunja.rule=Host(`vikunja.home`)"
       - "traefik.http.routers.vikunja.entrypoints=web"
       - "traefik.http.services.vikunja.loadbalancer.server.port=3456"
 
@@ -384,7 +405,7 @@ services:
       - internal
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.open-webui.rule=Host(`webui.${SERVER_IP}.nip.io`)"
+      - "traefik.http.routers.open-webui.rule=Host(`webui.home`)"
       - "traefik.http.routers.open-webui.entrypoints=web"
       - "traefik.http.services.open-webui.loadbalancer.server.port=8080"
 
