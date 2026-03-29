@@ -9,8 +9,9 @@ Guida completa per installare e configurare il home server da zero.
 3. [Configurazione AdGuard Home](#configurazione-adguard-home)
 4. [Configurazione Tailscale DNS](#configurazione-tailscale-dns)
 5. [Conflitto porta 53 su Linux](#conflitto-porta-53-su-linux)
-6. [Servizi e URL](#servizi-e-url)
-7. [Accesso fallback via IP:porta](#accesso-fallback-via-ipporta)
+6. [HTTPS per Vaultwarden](#https-per-vaultwarden)
+7. [Servizi e URL](#servizi-e-url)
+8. [Accesso fallback via IP:porta](#accesso-fallback-via-ipporta)
 
 ---
 
@@ -138,6 +139,78 @@ echo "nameserver 127.0.0.1" | sudo tee /etc/resolv.conf
 
 ---
 
+## HTTPS per Vaultwarden
+
+Vaultwarden richiede HTTPS per funzionare con l'estensione browser e le app mobile.
+La soluzione usata è un certificato Tailscale, valido e riconosciuto dai browser, senza aprire porte su internet.
+
+### Come funziona
+
+Tailscale rilascia certificati TLS validi per il dominio `<machine>.tail1234.ts.net` del tuo server.
+Traefik usa questo certificato per esporre Vaultwarden su HTTPS a quell'indirizzo.
+
+URL risultante: `https://<TAILSCALE_HOSTNAME>` (es. `https://homeserver.tail1234.ts.net`)
+
+### Setup (solo la prima volta)
+
+**1. Trova il tuo hostname Tailscale**
+
+```bash
+tailscale status --json | grep DNSName
+```
+
+Copia il valore (es. `homeserver.tail1234.ts.net`) — serve senza il punto finale.
+
+**2. Aggiorna il file `.env`**
+
+```
+TAILSCALE_HOSTNAME=homeserver.tail1234.ts.net
+```
+
+**3. Abilita HTTPS su Tailscale**
+
+Nel pannello [admin.tailscale.com](https://admin.tailscale.com):
+- Vai su **DNS**
+- Abilita **HTTPS Certificates**
+
+**4. Genera il certificato sul server**
+
+```bash
+tailscale cert homeserver.tail1234.ts.net
+```
+
+Questo crea due file nella directory corrente:
+- `homeserver.tail1234.ts.net.crt`
+- `homeserver.tail1234.ts.net.key`
+
+**5. Copia i certificati nella directory Traefik**
+
+```bash
+cp homeserver.tail1234.ts.net.crt ./traefik/certs/tailscale.crt
+cp homeserver.tail1234.ts.net.key ./traefik/certs/tailscale.key
+```
+
+**6. Riavvia Traefik**
+
+```bash
+docker compose restart traefik
+```
+
+Vaultwarden è ora raggiungibile su `https://<TAILSCALE_HOSTNAME>` con certificato valido.
+
+### Rinnovo del certificato
+
+I certificati Tailscale scadono periodicamente. Per rinnovarli:
+
+```bash
+tailscale cert homeserver.tail1234.ts.net
+cp homeserver.tail1234.ts.net.crt ./traefik/certs/tailscale.crt
+cp homeserver.tail1234.ts.net.key ./traefik/certs/tailscale.key
+docker compose restart traefik
+```
+
+---
+
 ## Servizi e URL
 
 Una volta completato il setup, tutti i servizi sono raggiungibili dai device Tailscale tramite URL `.home`:
@@ -148,7 +221,7 @@ Una volta completato il setup, tutti i servizi sono raggiungibili dai device Tai
 | Nextcloud | `http://nextcloud.home` | Cloud personale e sync file |
 | Immich | `http://immich.home` | Backup foto e video |
 | Open WebUI | `http://webui.home` | Interfaccia AI (Ollama) |
-| Vaultwarden | `http://vault.home` | Password manager |
+| Vaultwarden | `https://<TAILSCALE_HOSTNAME>` | Password manager (HTTPS) |
 | Portainer | `http://portainer.home` | Gestione container Docker |
 | Grafana | `http://grafana.home` | Dashboard metriche |
 | Prometheus | `http://prometheus.home` | Raccolta metriche |

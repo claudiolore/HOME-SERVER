@@ -1,0 +1,4 @@
+# I certificati contengono chiavi private - non committare mai
+*.crt
+*.key
+*.pem
