@@ -97,7 +97,7 @@ docker ps -a --filter "status=restarting"
 | **Uptime Kuma** | `http://RASPBERRY_IP:3001` | Crea account | Scegli username/password al primo accesso |
 | **Dozzle** | `http://RASPBERRY_IP:8888` | Nessuna | Accesso diretto |
 | **Open WebUI** | `http://RASPBERRY_IP:8081` | Crea account | Registra un account al primo accesso |
-| **FalkorDB** | `http://RASPBERRY_IP:3000` | Nessuna | Accesso diretto (browser integrato) |
+| **FalkorDB** | `http://RASPBERRY_IP:3003` | Nessuna | Accesso diretto (browser integrato) |
 | **Traefik** | `http://RASPBERRY_IP:8082` | Nessuna | Dashboard accessibile direttamente |
 | **Vaultwarden** | `http://RASPBERRY_IP:8222` | Crea account | Registra dal client Bitwarden |
 | **Vaultwarden Admin** | `http://RASPBERRY_IP:8222/admin` | Da .env | `VAULTWARDEN_ADMIN_TOKEN` |

@@ -130,7 +130,7 @@ Interfaccia web per interagire con Ollama, simile a ChatGPT ma completamente loc
 ### FalkorDB
 
 - **Container:** `falkordb`
-- **Porte:** `6379` (Redis protocol), `3000` (Web UI)
+- **Porte:** `6379` (Redis protocol), `3003` (Web UI)
 - **Immagine:** `falkordb/falkordb:latest`
 - **Dati:** `./falkordb/data`
 
