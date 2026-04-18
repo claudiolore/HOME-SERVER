@@ -306,7 +306,19 @@ services:
     networks:
       - internal
 
-  # --- AI ---
+  # --- AI / Knowledge Graph ---
+
+  falkordb:
+    image: falkordb/falkordb:latest
+    container_name: falkordb
+    restart: unless-stopped
+    volumes:
+      - ./falkordb/data:/data
+    ports:
+      - "6379:6379"
+      - "3000:3000"
+    networks:
+      - internal
 
   open-webui:
     image: ghcr.io/open-webui/open-webui:main

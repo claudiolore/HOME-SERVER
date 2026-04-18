@@ -17,6 +17,7 @@ mkdir -p redis/data
 mkdir -p ollama/data
 mkdir -p qdrant/data
 mkdir -p open-webui/data
+mkdir -p falkordb/data
 
 # Cloud
 mkdir -p nextcloud/data

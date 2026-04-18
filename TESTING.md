@@ -97,6 +97,7 @@ docker ps -a --filter "status=restarting"
 | **Uptime Kuma** | `http://RASPBERRY_IP:3001` | Crea account | Scegli username/password al primo accesso |
 | **Dozzle** | `http://RASPBERRY_IP:8888` | Nessuna | Accesso diretto |
 | **Open WebUI** | `http://RASPBERRY_IP:8081` | Crea account | Registra un account al primo accesso |
+| **FalkorDB** | `http://RASPBERRY_IP:3000` | Nessuna | Accesso diretto (browser integrato) |
 | **Traefik** | `http://RASPBERRY_IP:8082` | Nessuna | Dashboard accessibile direttamente |
 | **Vaultwarden** | `http://RASPBERRY_IP:8222` | Crea account | Registra dal client Bitwarden |
 | **Vaultwarden Admin** | `http://RASPBERRY_IP:8222/admin` | Da .env | `VAULTWARDEN_ADMIN_TOKEN` |
@@ -193,6 +194,33 @@ Dopo aver scaricato un modello con Ollama:
 2. Registra un account
 3. Seleziona il modello (es. tinyllama)
 4. Scrivi un messaggio e verifica la risposta
+
+### FalkorDB
+
+```bash
+# Verifica che FalkorDB risponda sulla porta Redis
+docker exec -it falkordb redis-cli PING
+# Deve rispondere: PONG
+
+# Verifica connessione via HTTP
+curl -s http://RASPBERRY_IP:3000/health
+```
+
+**Setup:**
+1. Vai su `http://RASPBERRY_IP:3000`
+2. Si apre direttamente l'interfaccia web con il browser Cypher
+3. Esegui query Cypher di test:
+
+```cypher
+// Crea nodi di test
+CREATE (p:Person {name: 'Alice'}), (b:Book {title: 'The Graph'})
+CREATE (p)-[:READS]->(b)
+
+// Query il grafo
+MATCH (n) RETURN n
+```
+
+> **Nota RPi 5:** Se il container non parte, verifica i log: `docker logs falkordb`. Potrebbe servire un'immagine ARM64 custom.
 
 ---
 
