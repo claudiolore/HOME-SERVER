@@ -315,7 +315,7 @@ services:
     volumes:
       - ./falkordb/data:/data
     ports:
-      - "6379:6379"
+      - "6380:6379"
       - "3003:3000"
     networks:
       - internal
