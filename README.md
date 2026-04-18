@@ -130,13 +130,18 @@ Interfaccia web per interagire con Ollama, simile a ChatGPT ma completamente loc
 ### FalkorDB
 
 - **Container:** `falkordb`
-- **Porte:** `6379` (Redis protocol), `3003` (Web UI)
+- **Porte:** `6380` (Redis protocol), `3003` (Web UI)
 - **Immagine:** `falkordb/falkordb:latest`
 - **Dati:** `./falkordb/data`
 
 Database a grafo che usa il protocollo Redis. Interfaccia web integrata per eseguire query Cypher e visualizzare il grafo. Usato per gestire Knowledge Graph e dati relazionali complessi in ambito AI.
 
-> **Nota RPi 5:** l'immagine potrebbe non supportare ARM64. Testare sulla Raspberry Pi 5 — se non funziona, potrebbe servire un build custom.
+| Accesso | URL | Descrizione |
+|---------|-----|-------------|
+| **Web UI** | `http://{{IP}}:3003` | Browser integrato per query Cypher e visualizzazione grafo |
+| **Redis Protocol** | `redis://{{IP}}:6380` | Per connettere client e applicazioni |
+
+> **Nota RPi 5:** l'immagine funziona su Raspberry Pi 5.
 
 **Domanda a cui risponde:** *"Voglio un database a grafo per gestire knowledge graph e query Cypher."*
 

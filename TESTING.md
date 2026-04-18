@@ -203,11 +203,14 @@ docker exec -it falkordb redis-cli PING
 # Deve rispondere: PONG
 
 # Verifica connessione via HTTP
-curl -s http://RASPBERRY_IP:3000/health
+curl -s http://RASPBERRY_IP:3003/health
+
+# Test Redis protocol dall'esterno
+redis-cli -h RASPBERRY_IP -p 6380 PING
 ```
 
 **Setup:**
-1. Vai su `http://RASPBERRY_IP:3000`
+1. Vai su `http://RASPBERRY_IP:3003`
 2. Si apre direttamente l'interfaccia web con il browser Cypher
 3. Esegui query Cypher di test:
 
@@ -219,8 +222,6 @@ CREATE (p)-[:READS]->(b)
 // Query il grafo
 MATCH (n) RETURN n
 ```
-
-> **Nota RPi 5:** Se il container non parte, verifica i log: `docker logs falkordb`. Potrebbe servire un'immagine ARM64 custom.
 
 ---
 
