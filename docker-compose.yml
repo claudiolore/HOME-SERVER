@@ -51,7 +51,7 @@ services:
       - internal
 
   qdrant:
-    image: y0mg/qdrant-raspberry-pi
+    image: haktansuren/qdrant-pi5-fixed-jemalloc:latest
     container_name: qdrant
     restart: unless-stopped
     volumes:
